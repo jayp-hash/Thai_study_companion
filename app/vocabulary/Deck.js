@@ -223,7 +223,9 @@ export default function Deck({ words }) {
     function measure() {
       if (!stageRef.current) return;
       const top = stageRef.current.getBoundingClientRect().top + window.scrollY;
-      setCardHeight(Math.round(Math.max(380, Math.min(620, window.innerHeight - top - 24))));
+      // On phones the back/next arrows sit in a row under the card
+      const below = window.innerWidth <= 560 ? 72 : 24;
+      setCardHeight(Math.round(Math.max(360, Math.min(620, window.innerHeight - top - below))));
     }
     measure();
     window.addEventListener('resize', measure);
@@ -458,56 +460,52 @@ export default function Deck({ words }) {
 
               {sentence ? (
                 <>
-                  {/* Sentence: play + slow on the left, word boxes and English on the right */}
-                  <div className="fc-ex">
-                    <div className="fc-ex-controls">
-                      <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, 1)} />
-                      <button
-                        type="button"
-                        className={`fc-turtle${player.playing === 'sentence-slow' ? ' is-playing' : ''}`}
-                        aria-label={player.playing === 'sentence-slow' ? 'Stop' : 'Play sentence slowly'}
-                        title="Play slowly"
-                        onClick={(e) => { e.stopPropagation(); player.play('sentence-slow', sentence.thai, SLOW_RATE); }}
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="fc-ex-main">
-                      <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
-                        {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
-                          const id = `box-${k}`;
-                          const isTarget = w.th === word.thai;
-                          const isOn = karaoke === k || player.playing === id;
-                          // In "On tap" mode, tapping a box also reveals its romanization
-                          const showRom = w.rom && (romanMode === 'show' || (romanMode === 'tap' && isRevealed(id)));
-                          return (
-                            <button
-                              key={k}
-                              type="button"
-                              className={`fc-box${isTarget ? ' is-target' : ''}${isOn ? ' is-on' : ''}`}
-                              aria-label={`Play ${w.th}${w.en ? `, meaning ${w.en}` : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                player.play(id, w.th, rate);
-                                if (romanMode === 'tap') reveal(id);
-                                if (w.en) showPeek(k, 2500, e.currentTarget);
-                              }}
-                              onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k, e.currentTarget)}
-                              onPointerLeave={(e) => e.pointerType === 'mouse' && hoverOut()}
-                            >
-                              {peek === k && w.en && <span className={`fc-peek align-${peekAlign}`} role="tooltip">{w.en}</span>}
-                              <span className="fc-box-th">{w.th}</span>
-                              {showRom && <span className="fc-box-rom">{w.rom}</span>}
-                              {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {sentence.english && <div className="fc-english">{sentence.english}</div>}
-                    </div>
+                  {/* Sentence: play + slow on their own row, then the word boxes, then the English */}
+                  <div className="fc-ex-controls">
+                    <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, 1)} />
+                    <button
+                      type="button"
+                      className={`fc-turtle${player.playing === 'sentence-slow' ? ' is-playing' : ''}`}
+                      aria-label={player.playing === 'sentence-slow' ? 'Stop' : 'Play sentence slowly'}
+                      title="Play slowly"
+                      onClick={(e) => { e.stopPropagation(); player.play('sentence-slow', sentence.thai, SLOW_RATE); }}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
+                      </svg>
+                    </button>
                   </div>
+                  <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
+                    {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
+                      const id = `box-${k}`;
+                      const isTarget = w.th === word.thai;
+                      const isOn = karaoke === k || player.playing === id;
+                      // In "On tap" mode, tapping a box also reveals its romanization
+                      const showRom = w.rom && (romanMode === 'show' || (romanMode === 'tap' && isRevealed(id)));
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          className={`fc-box${isTarget ? ' is-target' : ''}${isOn ? ' is-on' : ''}`}
+                          aria-label={`Play ${w.th}${w.en ? `, meaning ${w.en}` : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            player.play(id, w.th, rate);
+                            if (romanMode === 'tap') reveal(id);
+                            if (w.en) showPeek(k, 2500, e.currentTarget);
+                          }}
+                          onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k, e.currentTarget)}
+                          onPointerLeave={(e) => e.pointerType === 'mouse' && hoverOut()}
+                        >
+                          {peek === k && w.en && <span className={`fc-peek align-${peekAlign}`} role="tooltip">{w.en}</span>}
+                          <span className="fc-box-th">{w.th}</span>
+                          {showRom && <span className="fc-box-rom">{w.rom}</span>}
+                          {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {sentence.english && <div className="fc-english">{sentence.english}</div>}
                 </>
               ) : (
                 <p className="fc-soon">Example sentence coming soon</p>

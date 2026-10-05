@@ -382,16 +382,17 @@ p.page-subtitle {
 .fc-arrow:disabled { opacity: .35; cursor: default; }
 .fc-arrow:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
 
-/* Phones: arrows sit over the card's edges (swiping also works) */
+/* Phones: arrows move to a row under the card so they never cover it
+   (swiping left/right also works) */
 @media (max-width: 560px) {
-  .fc-stage { grid-template-columns: minmax(0, 1fr); }
-  .fc-arrow {
-    position: absolute; top: 50%; z-index: 3; width: 40px; height: 40px; margin-top: -20px;
-    box-shadow: 0 2px 8px rgba(31, 37, 51, .18);
+  .fc-stage {
+    grid-template-columns: 1fr 1fr; grid-template-areas: "card card" "prev next";
+    row-gap: 14px; column-gap: 24px;
   }
-  .fc-arrow.prev { left: -10px; }
-  .fc-arrow.next { right: -10px; }
-  .fc-arrow:disabled { display: none; }
+  .fc-zone { grid-area: card; }
+  .fc-arrow { width: 48px; height: 48px; }
+  .fc-arrow.prev { grid-area: prev; justify-self: end; }
+  .fc-arrow.next { grid-area: next; justify-self: start; }
 }
 
 .fc-zone { perspective: 1400px; min-width: 0; }
@@ -444,9 +445,7 @@ p.page-subtitle {
 .fc-word { font: 600 calc(var(--fc-s, 1) * 32px)/1.6 var(--fc-thai); }
 .fc-word-roman { font: italic 600 calc(var(--fc-s, 1) * 17px) var(--fc-body); color: var(--fc-muted); }
 .fc-meaning { font: 800 calc(var(--fc-s, 1) * 28px)/1.15 var(--fc-display); text-wrap: balance; }
-.fc-ex { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: calc(var(--fc-s, 1) * 14px); align-items: start; }
-.fc-ex-controls { display: grid; justify-items: center; gap: 10px; padding-top: 6px; }
-.fc-ex-main { display: grid; gap: calc(var(--fc-s, 1) * 10px); min-width: 0; }
+.fc-ex-controls { display: flex; align-items: center; gap: 12px; }
 /* Turtle: plays the sentence slowly (small round button under play) */
 .fc-turtle {
   width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--fc-line); background: var(--fc-surface);
