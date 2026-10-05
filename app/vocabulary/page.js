@@ -17,7 +17,7 @@ async function loadWords() {
     // each link to the sentence itself — a JOIN across both tables.
     const { data, error } = await supabasePublic
       .from('vocabulary')
-      .select('id, thai, romanization, english, frequency_rank, word_sentences(is_sample, sentences(id, thai, romanization, english, review_status))')
+      .select('id, thai, romanization, english, frequency_rank, word_sentences(is_sample, sentences(id, thai, romanization, english, review_status, words))')
       .order('frequency_rank', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -52,9 +52,7 @@ export default async function VocabularyPage() {
       <p className="eyebrow">Vocabulary</p>
       <h1 className="page-title">Flashcards</h1>
       <p className="page-subtitle">
-        {words.length} course words, most common first, in sets of 20. Tap the card
-        to flip it, press the speaker to hear it, and use the arrow keys or buttons to move
-        through the set.
+        {words.length} words, most common first, in sets of 20.
       </p>
 
       <Deck words={words} />

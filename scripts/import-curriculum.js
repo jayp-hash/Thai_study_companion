@@ -161,12 +161,26 @@ async function main() {
       const thai = r['Thai (Claude fills in)'];
       if (!word || !thai) continue;
       samples.push({ word, thai });
+      const romanization = r['Romanization (Claude fills in)'] || null;
       if (!sentences.has(thai)) {
         add({
-          thai, romanization: r['Romanization (Claude fills in)'] || null, english: r['Your English sentence'] || null,
+          thai, romanization, english: r['Your English sentence'] || null,
           category: 'Flashcard sample', sentence_type: guessType(thai),
           source: 'Sentence Worksheet', review_status: 'needs_native_review',
         });
+      }
+      // Word boxes: "ฉัน|อยู่|ที่|บ้าน" paired with the romanization's words
+      // ("chǎn yùu thîi bâan"). Both must have the same number of words.
+      const boxes = (r['Word boxes (Claude fills in)'] || '').split('|').map((x) => x.trim()).filter(Boolean);
+      if (boxes.length) {
+        const roms = (romanization || '').split(/\s+/).filter(Boolean);
+        if (boxes.join('') !== thai.replace(/\s+/g, '')) {
+          console.log(`  Word boxes don't spell the sentence for "${word}": ${boxes.join('|')}`);
+        } else if (roms.length !== boxes.length) {
+          console.log(`  Word boxes skipped for "${word}": ${boxes.length} Thai words but ${roms.length} romanized words`);
+        } else {
+          sentences.get(thai).words = boxes.map((th, k) => ({ th, rom: roms[k] }));
+        }
       }
     }
   }
@@ -176,7 +190,8 @@ async function main() {
   const savedWords = await upsertInBatches('vocabulary', vocab, 'id, thai');
   console.log('done');
   process.stdout.write(`Uploading ${sentences.size} sentences... `);
-  const savedSentences = await upsertInBatches('sentences', [...sentences.values()], 'id, thai');
+  const sentenceRows = [...sentences.values()].map((s) => ({ ...s, words: s.words || null }));
+  const savedSentences = await upsertInBatches('sentences', sentenceRows, 'id, thai');
   console.log('done');
 
   // --- link words to sentences ---
