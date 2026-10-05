@@ -261,6 +261,33 @@ export default function Deck({ words }) {
   }, [position]);
   useEffect(() => () => { clearTimeout(peekTimer.current); clearTimeout(hoverTimer.current); }, []);
 
+  // Fit to the card: every card is the same size, so long content shrinks
+  // to fit instead of being cut off.
+  //  - Front: a long word (กุมภาพันธ์) gets a smaller font until it fits the width.
+  //  - Back: everything scales down in small steps until nothing overflows.
+  const bigThaiRef = useRef(null);
+  const backBodyRef = useRef(null);
+  const fit = useCallback(() => {
+    const big = bigThaiRef.current;
+    if (big) {
+      big.style.fontSize = '';
+      const room = big.clientWidth; // the width the word is allowed to use
+      if (big.scrollWidth > room) {
+        const size = parseFloat(getComputedStyle(big).fontSize);
+        big.style.fontSize = `${Math.floor(size * room / big.scrollWidth)}px`;
+      }
+    }
+    const back = backBodyRef.current;
+    if (back) {
+      let scale = 1;
+      back.style.setProperty('--fc-s', '1');
+      while (back.scrollHeight > back.clientHeight + 1 && scale > 0.7) {
+        scale = Math.round((scale - 0.05) * 100) / 100;
+        back.style.setProperty('--fc-s', String(scale));
+      }
+    }
+  }, []);
+
   const setWords = useMemo(
     () => words.slice(setIndex * SET_SIZE, setIndex * SET_SIZE + SET_SIZE),
     [words, setIndex]
@@ -313,6 +340,15 @@ export default function Deck({ words }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [go, flip]);
+
+  // Re-fit whenever the card, its size, or the romanization setting changes,
+  // and once the fonts have loaded (they change the text's size).
+  useLayoutEffect(() => { fit(); }, [fit, word, cardHeight, romanMode, revealed]);
+  useEffect(() => {
+    document.fonts?.ready.then(fit);
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [fit]);
 
   if (!word) return <p className="deck-error">No words found.</p>;
 
@@ -396,7 +432,7 @@ export default function Deck({ words }) {
           <section className="fc-face fc-front" aria-hidden={flipped}>
             {band}
             <div className="fc-front-body">
-              <div className={`fc-big-thai${player.playing === 'word' ? ' is-speaking' : ''}`} lang="th">{word.thai}</div>
+              <div ref={bigThaiRef} className={`fc-big-thai${player.playing === 'word' ? ' is-speaking' : ''}`} lang="th">{word.thai}</div>
               <div className="fc-big-roman">
                 <Roman text={word.romanization} mode={romanMode} revealed={isRevealed('front')} onReveal={() => reveal('front')} />
               </div>
@@ -407,7 +443,7 @@ export default function Deck({ words }) {
           {/* BACK: meaning + one sample sentence */}
           <section className="fc-face fc-back" aria-hidden={!flipped}>
             {band}
-            <div className="fc-back-body">
+            <div className="fc-back-body" ref={backBodyRef}>
               <div className="fc-top">
                 <div className="fc-word-line">
                   <span className="fc-word" lang="th">{word.thai}</span>
@@ -423,21 +459,19 @@ export default function Deck({ words }) {
               {sentence ? (
                 <>
                   <div className="fc-label-row">
+                    <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, rate)} />
                     <span className="fc-label">In a sentence</span>
-                    <div className="fc-controls">
-                      <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, rate)} />
-                      <button
-                        type="button"
-                        className={`fc-slow${slow ? ' is-on' : ''}`}
-                        aria-pressed={slow}
-                        onClick={(e) => { e.stopPropagation(); setSlow((s) => !s); }}
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
-                        </svg>
-                        Slow
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className={`fc-slow${slow ? ' is-on' : ''}`}
+                      aria-pressed={slow}
+                      onClick={(e) => { e.stopPropagation(); setSlow((s) => !s); }}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
+                      </svg>
+                      Slow
+                    </button>
                   </div>
                   <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
                     {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {

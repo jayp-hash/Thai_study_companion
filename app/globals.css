@@ -415,7 +415,7 @@ p.page-subtitle {
 
 /* Front */
 .fc-front-body { flex: 1; min-height: 0; display: grid; place-items: center; align-content: center; gap: 6px; padding: 20px; text-align: center; }
-.fc-big-thai { font: 600 clamp(72px, 22vw, 104px)/1.6 var(--fc-thai); transition: color .2s; }
+.fc-big-thai { font: 600 clamp(72px, 22vw, 104px)/1.6 var(--fc-thai); transition: color .2s; white-space: nowrap; width: 100%; overflow: hidden; text-align: center; }
 .fc-big-thai.is-speaking { color: var(--cat); }
 .fc-big-roman { font: italic 600 26px var(--fc-body); color: var(--fc-muted); margin-bottom: 18px; min-height: 36px; }
 
@@ -431,38 +431,39 @@ p.page-subtitle {
 .fc-play:hover { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 7px 0 var(--cat-edge), 0 0 0 8px var(--cat-tint); }
 .fc-play:active { transform: translateY(5px); filter: none; box-shadow: 0 0 0 var(--cat-edge), 0 0 0 8px var(--cat-tint); }
 .fc-play.is-playing { box-shadow: 0 5px 0 var(--cat-edge), 0 0 0 8px var(--cat-tint); animation: fc-ring 1.2s ease-in-out infinite; }
-.fc-play.sm { --size: 56px; }
+.fc-play.sm { --size: 48px; }
 .fc-dots { font: 800 22px var(--fc-body); line-height: 1; }
 @keyframes fc-ring { 50% { box-shadow: 0 5px 0 var(--cat-edge), 0 0 0 14px transparent; } }
 
 /* Back */
 .fc-back-body {
-  flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 12px; padding: 16px 20px 20px; align-content: start;
+  --fc-s: 1; flex: 1; min-height: 0; overflow: hidden; display: grid; gap: calc(var(--fc-s) * 12px); padding: 16px 20px 18px; align-content: start;
 }
 .fc-top { display: grid; gap: 0; }
 .fc-word-line { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.fc-word { font: 600 32px/1.6 var(--fc-thai); }
-.fc-word-roman { font: italic 600 17px var(--fc-body); color: var(--fc-muted); }
-.fc-meaning { font: 800 28px/1.15 var(--fc-display); text-wrap: balance; }
-.fc-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fc-word { font: 600 calc(var(--fc-s, 1) * 32px)/1.6 var(--fc-thai); }
+.fc-word-roman { font: italic 600 calc(var(--fc-s, 1) * 17px) var(--fc-body); color: var(--fc-muted); }
+.fc-meaning { font: 800 calc(var(--fc-s, 1) * 28px)/1.15 var(--fc-display); text-wrap: balance; }
+.fc-label-row { display: flex; align-items: center; gap: 12px; }
+.fc-label-row .fc-slow { margin-left: auto; }
 .fc-divider { height: 2px; background: var(--fc-line); border-radius: 2px; }
 .fc-label { font: 800 12px var(--fc-body); letter-spacing: .1em; text-transform: uppercase; color: var(--fc-muted); }
 
 .fc-sentence { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
-.fc-sentence.is-long .fc-box-th { font-size: 20px; }
+.fc-sentence.is-long .fc-box-th { font-size: calc(var(--fc-s, 1) * 20px); }
 .fc-sentence.is-long .fc-box { padding: 4px 8px 5px; }
 .fc-box {
   position: relative; display: grid; justify-items: center; padding: 6px 10px 7px; border-radius: 12px; cursor: pointer;
   background: var(--fc-box); color: var(--fc-text); border: 2px solid transparent; border-bottom-width: 4px;
   font: inherit; transition: background .12s, color .12s, transform .12s, border-color .12s;
 }
-.fc-box-th { font: 600 24px/1.75 var(--fc-thai); }
-.fc-box-rom { font: 600 13px/1.2 var(--fc-body); color: var(--fc-muted); transition: color .12s; }
+.fc-box-th { font: 600 calc(var(--fc-s, 1) * 24px)/1.7 var(--fc-thai); }
+.fc-box-rom { font: 600 calc(var(--fc-s, 1) * 13px)/1.2 var(--fc-body); color: var(--fc-muted); transition: color .12s; }
 .fc-box:hover { transform: translateY(-2px); border-color: var(--cat); }
 .fc-box.is-target { border-color: var(--cat); background: var(--cat-tint); }
 .fc-box.is-on { background: var(--cat); color: #fff; border-color: var(--cat-edge); transform: translateY(-3px); }
 .fc-box.is-on .fc-box-rom { color: rgba(255, 255, 255, .9); }
-.fc-english { font: 600 18px/1.4 var(--fc-body); }
+.fc-english { font: 600 calc(var(--fc-s, 1) * 18px)/1.4 var(--fc-body); }
 .fc-controls { display: flex; gap: 12px; align-items: center; }
 .fc-slow {
   height: 44px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--fc-line); background: var(--fc-surface);
