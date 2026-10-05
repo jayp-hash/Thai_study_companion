@@ -10,7 +10,13 @@ out/
 .env.local
 .env.*.local
 
+# generated audio from scripts/test-voice-settings.js
+voice-tests/
+
 # misc
 .DS_Store
 *.log
 npm-debug.log*
+
+# Vercel CLI project link (machine-specific)
+.vercel/

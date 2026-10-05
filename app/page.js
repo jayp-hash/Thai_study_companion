@@ -1,84 +1,60 @@
-'use client';
-import { useState } from 'react';
-
-function Dot({ status }) {
-  const color = status === 'ok' ? '#16a34a' : status === 'error' ? '#dc2626' : status === 'loading' ? '#f59e0b' : '#9ca3af';
-  return <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: color, marginRight: 8 }} />;
-}
+const SECTIONS = [
+  {
+    href: '/vocabulary',
+    title: 'Vocabulary',
+    desc: 'All 896 course words as flashcards, most common first, with example sentences on the back. Tap to flip, press play to hear it.',
+    live: true,
+  },
+  {
+    href: '#',
+    title: 'Sentence Patterns',
+    desc: 'The core grammar patterns of the course, with example sentences and common-mistake call-outs.',
+    live: false,
+  },
+  {
+    href: '#',
+    title: 'Sentence Structures',
+    desc: 'How Thai sentences are actually built: word order, classifiers and particles, one structure at a time.',
+    live: false,
+  },
+  {
+    href: '#',
+    title: 'Activities',
+    desc: 'Picture match, listening practice, and other drills that mix vocabulary and patterns together.',
+    live: false,
+  },
+];
 
 export default function Home() {
-  const [supabase, setSupabase] = useState({ status: 'idle', message: 'not tested yet' });
-  const [stripe, setStripe] = useState({ status: 'idle', message: 'not tested yet' });
-  const [elevenlabs, setElevenlabs] = useState({ status: 'idle', message: 'not tested yet' });
-  const [audioUrl, setAudioUrl] = useState(null);
-
-  async function testSupabase() {
-    setSupabase({ status: 'loading', message: 'Checking...' });
-    try {
-      const res = await fetch('/api/test-supabase');
-      const data = await res.json();
-      setSupabase({ status: data.ok ? 'ok' : 'error', message: data.ok ? data.message : data.error });
-    } catch (e) {
-      setSupabase({ status: 'error', message: e.message });
-    }
-  }
-
-  async function testStripe() {
-    setStripe({ status: 'loading', message: 'Checking...' });
-    try {
-      const res = await fetch('/api/test-stripe');
-      const data = await res.json();
-      setStripe({ status: data.ok ? 'ok' : 'error', message: data.ok ? data.message : data.error });
-    } catch (e) {
-      setStripe({ status: 'error', message: e.message });
-    }
-  }
-
-  async function testElevenLabs() {
-    setElevenlabs({ status: 'loading', message: 'Generating Thai audio clip...' });
-    setAudioUrl(null);
-    try {
-      const res = await fetch('/api/test-elevenlabs');
-      if (!res.ok) {
-        let errMsg = res.statusText;
-        try { const data = await res.json(); errMsg = data.error || errMsg; } catch {}
-        setElevenlabs({ status: 'error', message: errMsg });
-        return;
-      }
-      const blob = await res.blob();
-      setAudioUrl(URL.createObjectURL(blob));
-      setElevenlabs({ status: 'ok', message: 'Audio generated — press play below.' });
-    } catch (e) {
-      setElevenlabs({ status: 'error', message: e.message });
-    }
-  }
-
-  const box = { border: '1px solid #e5e7eb', borderRadius: 8, padding: 16, marginBottom: 16 };
-  const btn = { padding: '8px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: '#f9fafb', cursor: 'pointer', marginBottom: 8 };
-
   return (
-    <main style={{ fontFamily: 'sans-serif', padding: '40px', maxWidth: '640px', margin: '0 auto' }}>
-      <h1>Thai Study Companion</h1>
-      <p style={{ color: '#6b7280' }}>
-        The full app (lessons, dashboards, payments) isn&rsquo;t built yet — this page is a live check
-        that the pieces it&rsquo;ll be built on (database, payments, text-to-speech) are actually wired
-        up correctly. Click each button below to run a real test against the live service.
+    <main className="page">
+      <p className="eyebrow">Learn Thai</p>
+      <h1 className="page-title">Where do you want to start?</h1>
+      <p className="page-subtitle">
+        This is an early, in-progress look at the course. Vocabulary is live with real
+        words and audio. Everything else here is coming soon.
       </p>
 
-      <div style={box}>
-        <button style={btn} onClick={testSupabase}>Test Supabase (database)</button>
-        <div><Dot status={supabase.status} /><strong>Supabase:</strong> {supabase.message}</div>
-      </div>
-
-      <div style={box}>
-        <button style={btn} onClick={testStripe}>Test Stripe (payments)</button>
-        <div><Dot status={stripe.status} /><strong>Stripe:</strong> {stripe.message}</div>
-      </div>
-
-      <div style={box}>
-        <button style={btn} onClick={testElevenLabs}>Test ElevenLabs (generates real Thai audio)</button>
-        <div><Dot status={elevenlabs.status} /><strong>ElevenLabs:</strong> {elevenlabs.message}</div>
-        {audioUrl && <audio controls src={audioUrl} style={{ marginTop: 8, width: '100%' }} />}
+      <div className="section-grid">
+        {SECTIONS.map((section) =>
+          section.live ? (
+            <a key={section.title} href={section.href} className="section-card is-live">
+              <div className="section-card-top">
+                <span className="section-card-title">{section.title}</span>
+                <span className="badge badge-live">Live</span>
+              </div>
+              <p className="section-card-desc">{section.desc}</p>
+            </a>
+          ) : (
+            <div key={section.title} className="section-card is-soon">
+              <div className="section-card-top">
+                <span className="section-card-title">{section.title}</span>
+                <span className="badge badge-soon">Coming soon</span>
+              </div>
+              <p className="section-card-desc">{section.desc}</p>
+            </div>
+          )
+        )}
       </div>
     </main>
   );
