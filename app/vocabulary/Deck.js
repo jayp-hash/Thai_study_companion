@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
-const SLOW_RATE = 0.75; // "Slow" button: 75% speed, same pitch
+const SLOW_RATE = 0.75; // turtle button: plays the sentence at 75% speed, same pitch
 
 // Until words have categories (round 2), every card uses this band.
 const DEFAULT_CATEGORY = { name: 'Vocabulary', color: '#4F5BD5', edge: '#353FA6' };
@@ -180,7 +180,6 @@ export default function Deck({ words }) {
   const [order, setOrder] = useState(null); // null = normal order; array = shuffled
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [slow, setSlow] = useState(false);
   const player = usePlayer();
   const [romanMode, setRomanMode] = useRomanMode();
   const [revealed, setRevealed] = useState(() => new Set()); // which romanizations were tapped open
@@ -354,8 +353,9 @@ export default function Deck({ words }) {
 
   const cat = word.category || DEFAULT_CATEGORY;
   const catStyle = { '--cat': cat.color, '--cat-edge': cat.edge, '--cat-tint': hexToRgba(cat.color, 0.14) };
-  const rate = slow ? SLOW_RATE : 1;
-  const karaoke = player.playing === 'sentence' ? activeBox(sentence?.words, player.progress) : -1;
+  const rate = 1; // words and word boxes always play at normal speed
+  const karaoke = player.playing === 'sentence' || player.playing === 'sentence-slow'
+    ? activeBox(sentence?.words, player.progress) : -1;
   const band = (
     <div className="fc-band">
       <span className="fc-band-cat">{cat.name}</span>
@@ -458,52 +458,56 @@ export default function Deck({ words }) {
 
               {sentence ? (
                 <>
-                  <div className="fc-label-row">
-                    <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, rate)} />
-                    <span className="fc-label">In a sentence</span>
-                    <button
-                      type="button"
-                      className={`fc-slow${slow ? ' is-on' : ''}`}
-                      aria-pressed={slow}
-                      onClick={(e) => { e.stopPropagation(); setSlow((s) => !s); }}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
-                      </svg>
-                      Slow
-                    </button>
+                  {/* Sentence: play + slow on the left, word boxes and English on the right */}
+                  <div className="fc-ex">
+                    <div className="fc-ex-controls">
+                      <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, 1)} />
+                      <button
+                        type="button"
+                        className={`fc-turtle${player.playing === 'sentence-slow' ? ' is-playing' : ''}`}
+                        aria-label={player.playing === 'sentence-slow' ? 'Stop' : 'Play sentence slowly'}
+                        title="Play slowly"
+                        onClick={(e) => { e.stopPropagation(); player.play('sentence-slow', sentence.thai, SLOW_RATE); }}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="fc-ex-main">
+                      <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
+                        {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
+                          const id = `box-${k}`;
+                          const isTarget = w.th === word.thai;
+                          const isOn = karaoke === k || player.playing === id;
+                          // In "On tap" mode, tapping a box also reveals its romanization
+                          const showRom = w.rom && (romanMode === 'show' || (romanMode === 'tap' && isRevealed(id)));
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              className={`fc-box${isTarget ? ' is-target' : ''}${isOn ? ' is-on' : ''}`}
+                              aria-label={`Play ${w.th}${w.en ? `, meaning ${w.en}` : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                player.play(id, w.th, rate);
+                                if (romanMode === 'tap') reveal(id);
+                                if (w.en) showPeek(k, 2500, e.currentTarget);
+                              }}
+                              onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k, e.currentTarget)}
+                              onPointerLeave={(e) => e.pointerType === 'mouse' && hoverOut()}
+                            >
+                              {peek === k && w.en && <span className={`fc-peek align-${peekAlign}`} role="tooltip">{w.en}</span>}
+                              <span className="fc-box-th">{w.th}</span>
+                              {showRom && <span className="fc-box-rom">{w.rom}</span>}
+                              {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {sentence.english && <div className="fc-english">{sentence.english}</div>}
+                    </div>
                   </div>
-                  <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
-                    {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
-                      const id = `box-${k}`;
-                      const isTarget = w.th === word.thai;
-                      const isOn = karaoke === k || player.playing === id;
-                      // In "On tap" mode, tapping a box also reveals its romanization
-                      const showRom = w.rom && (romanMode === 'show' || (romanMode === 'tap' && isRevealed(id)));
-                      return (
-                        <button
-                          key={k}
-                          type="button"
-                          className={`fc-box${isTarget ? ' is-target' : ''}${isOn ? ' is-on' : ''}`}
-                          aria-label={`Play ${w.th}${w.en ? `, meaning ${w.en}` : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            player.play(id, w.th, rate);
-                            if (romanMode === 'tap') reveal(id);
-                            if (w.en) showPeek(k, 2500, e.currentTarget);
-                          }}
-                          onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k, e.currentTarget)}
-                          onPointerLeave={(e) => e.pointerType === 'mouse' && hoverOut()}
-                        >
-                          {peek === k && w.en && <span className={`fc-peek align-${peekAlign}`} role="tooltip">{w.en}</span>}
-                          <span className="fc-box-th">{w.th}</span>
-                          {showRom && <span className="fc-box-rom">{w.rom}</span>}
-                          {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {sentence.english && <div className="fc-english">{sentence.english}</div>}
                 </>
               ) : (
                 <p className="fc-soon">Example sentence coming soon</p>
