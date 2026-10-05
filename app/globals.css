@@ -440,12 +440,13 @@ p.page-subtitle {
 .fc-back-body {
   --fc-s: 1; flex: 1; min-height: 0; overflow: hidden; display: grid; gap: calc(var(--fc-s) * 12px); padding: 16px 20px 18px; align-content: start;
 }
-.fc-top { display: grid; gap: 0; }
+.fc-top { display: flex; align-items: center; gap: 16px; }
+.fc-top-text { display: grid; gap: 0; min-width: 0; }
 .fc-word-line { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .fc-word { font: 600 calc(var(--fc-s, 1) * 32px)/1.6 var(--fc-thai); }
 .fc-word-roman { font: italic 600 calc(var(--fc-s, 1) * 17px) var(--fc-body); color: var(--fc-muted); }
-.fc-meaning { font: 800 calc(var(--fc-s, 1) * 28px)/1.15 var(--fc-display); text-wrap: balance; }
-.fc-ex-controls { display: flex; align-items: center; gap: 12px; }
+.fc-meaning { font: 800 calc(var(--fc-s, 1) * 26px)/1.15 var(--fc-display); text-wrap: balance; }
+.fc-ex-controls { display: flex; align-items: center; gap: 10px; flex: none; }
 /* Turtle: plays the sentence slowly (small round button under play) */
 .fc-turtle {
   width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--fc-line); background: var(--fc-surface);
@@ -461,20 +462,20 @@ p.page-subtitle {
 .fc-label { font: 800 12px var(--fc-body); letter-spacing: .1em; text-transform: uppercase; color: var(--fc-muted); }
 
 .fc-sentence { display: flex; flex-wrap: wrap; gap: 8px; }
-.fc-sentence.is-long .fc-box-th { font-size: calc(var(--fc-s, 1) * 20px); }
+.fc-sentence.is-long .fc-box-th { font-size: calc(var(--fc-s, 1) * 25px); }
 .fc-sentence.is-long .fc-box { padding: 4px 8px 5px; }
 .fc-box {
   position: relative; display: grid; justify-items: center; padding: 6px 10px 7px; border-radius: 12px; cursor: pointer;
   background: var(--fc-box); color: var(--fc-text); border: 2px solid transparent; border-bottom-width: 4px;
   font: inherit; transition: background .12s, color .12s, transform .12s, border-color .12s;
 }
-.fc-box-th { font: 600 calc(var(--fc-s, 1) * 24px)/1.7 var(--fc-thai); }
-.fc-box-rom { font: 600 calc(var(--fc-s, 1) * 13px)/1.2 var(--fc-body); color: var(--fc-muted); transition: color .12s; }
+.fc-box-th { font: 600 calc(var(--fc-s, 1) * 28px)/1.65 var(--fc-thai); }
+.fc-box-rom { font: 600 calc(var(--fc-s, 1) * 14px)/1.2 var(--fc-body); color: var(--fc-muted); transition: color .12s; }
 .fc-box:hover { transform: translateY(-2px); border-color: var(--cat); }
 .fc-box.is-target { border-color: var(--cat); background: var(--cat-tint); }
 .fc-box.is-on { background: var(--cat); color: #fff; border-color: var(--cat-edge); transform: translateY(-3px); }
 .fc-box.is-on .fc-box-rom { color: rgba(255, 255, 255, .9); }
-.fc-english { font: 600 calc(var(--fc-s, 1) * 18px)/1.4 var(--fc-body); }
+.fc-english { font: 600 calc(var(--fc-s, 1) * 19px)/1.4 var(--fc-body); }
 .fc-controls { display: flex; gap: 12px; align-items: center; }
 .fc-slow {
   height: 44px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--fc-line); background: var(--fc-surface);
@@ -550,6 +551,17 @@ body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
 .fc-page-title { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; max-width: 600px; margin-inline: auto; }
 .fc-page-title h1 { font: 800 24px var(--font-display), system-ui, sans-serif; margin: 0; }
 .fc-page-title span { color: var(--color-muted); font-size: 14px; }
+
+@media (max-width: 560px) {
+  /* The header already says Vocabulary, so the title line goes on phones */
+  body:has(.fc) .fc-page-title { display: none; }
+  body:has(.fc) .site-header { padding: 10px 16px; }
+  body:has(.fc) .site-header .brand { font-size: 16px; white-space: nowrap; }
+  body:has(.fc) .site-header nav { gap: 14px; font-size: 13px; }
+  body:has(.fc) .page { padding-inline: 16px; }
+  .fc-back-body { padding: 14px 16px 16px; }
+  .fc-box { padding: 5px 8px 6px; }
+}
 
 /* Error page (vocabulary/error.js) */
 .deck-btn {

@@ -446,7 +446,25 @@ export default function Deck({ words }) {
           <section className="fc-face fc-back" aria-hidden={!flipped}>
             {band}
             <div className="fc-back-body" ref={backBodyRef}>
-              <div className="fc-top">
+              {/* Top: sentence play + slow on the left, the word and its meaning beside them */}
+              <div className={`fc-top${sentence ? ' has-controls' : ''}`}>
+                {sentence && (
+                <div className="fc-ex-controls">
+                  <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, 1)} />
+                  <button
+                    type="button"
+                    className={`fc-turtle${player.playing === 'sentence-slow' ? ' is-playing' : ''}`}
+                    aria-label={player.playing === 'sentence-slow' ? 'Stop' : 'Play sentence slowly'}
+                    title="Play slowly"
+                    onClick={(e) => { e.stopPropagation(); player.play('sentence-slow', sentence.thai, SLOW_RATE); }}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
+                    </svg>
+                  </button>
+                </div>
+                )}
+                <div className="fc-top-text">
                 <div className="fc-word-line">
                   <span className="fc-word" lang="th">{word.thai}</span>
                   <span className="fc-word-roman">
@@ -454,27 +472,13 @@ export default function Deck({ words }) {
                   </span>
                 </div>
                 <div className="fc-meaning">{cleanMeaning(word.english)}</div>
+                </div>
               </div>
 
               <div className="fc-divider" />
 
               {sentence ? (
                 <>
-                  {/* Sentence: play + slow on their own row, then the word boxes, then the English */}
-                  <div className="fc-ex-controls">
-                    <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, 1)} />
-                    <button
-                      type="button"
-                      className={`fc-turtle${player.playing === 'sentence-slow' ? ' is-playing' : ''}`}
-                      aria-label={player.playing === 'sentence-slow' ? 'Stop' : 'Play sentence slowly'}
-                      title="Play slowly"
-                      onClick={(e) => { e.stopPropagation(); player.play('sentence-slow', sentence.thai, SLOW_RATE); }}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
-                      </svg>
-                    </button>
-                  </div>
                   <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
                     {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
                       const id = `box-${k}`;
