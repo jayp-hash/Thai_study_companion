@@ -331,10 +331,10 @@ p.page-subtitle {
   --fc-thai: var(--font-thai), "Thonburi", "Leelawadee UI", sans-serif;
   --fc-body: var(--font-body), system-ui, -apple-system, "Segoe UI", sans-serif;
   --fc-display: var(--font-display), var(--font-body), system-ui, sans-serif;
-  max-width: 480px;
-  margin: 8px auto 0;
+  max-width: 600px;
+  margin: 0 auto;
   display: grid;
-  gap: 20px;
+  gap: 14px;
   font-family: var(--fc-body);
   color: var(--fc-text);
 }
@@ -365,15 +365,44 @@ p.page-subtitle {
 .fc-shuffle:active { transform: translateY(3px); box-shadow: none; }
 
 /* The card and its flip */
-.fc-zone { perspective: 1400px; }
-.fc-card { display: grid; cursor: pointer; transition: transform .5s cubic-bezier(.3, .7, .3, 1); transform-style: preserve-3d; outline: none; }
+/* Card with the back / next arrows on either side.
+   --fc-h is set by Deck.js so the card fills the screen below the toolbar. */
+.fc-stage {
+  position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) 52px;
+  gap: 14px; align-items: center;
+}
+.fc-arrow {
+  width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--fc-line); background: var(--fc-surface);
+  color: var(--fc-text); display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 0 var(--fc-line);
+  transition: transform .1s, box-shadow .1s;
+}
+.fc-arrow svg { width: 22px; height: 22px; }
+.fc-arrow:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--fc-edge); }
+.fc-arrow:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
+.fc-arrow:disabled { opacity: .35; cursor: default; }
+.fc-arrow:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
+
+/* Phones: arrows sit over the card's edges (swiping also works) */
+@media (max-width: 560px) {
+  .fc-stage { grid-template-columns: minmax(0, 1fr); }
+  .fc-arrow {
+    position: absolute; top: 50%; z-index: 3; width: 40px; height: 40px; margin-top: -20px;
+    box-shadow: 0 2px 8px rgba(31, 37, 51, .18);
+  }
+  .fc-arrow.prev { left: -10px; }
+  .fc-arrow.next { right: -10px; }
+  .fc-arrow:disabled { display: none; }
+}
+
+.fc-zone { perspective: 1400px; min-width: 0; }
+.fc-card { height: var(--fc-h, 520px); display: grid; cursor: pointer; transition: transform .5s cubic-bezier(.3, .7, .3, 1); transform-style: preserve-3d; outline: none; }
 .fc-card.is-flipped { transform: rotateY(180deg); }
 .fc-card:focus-visible .fc-face { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
 .fc-face {
   grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden;
   background: var(--fc-surface); border: 2px solid var(--fc-line); border-radius: 24px;
   box-shadow: 0 6px 0 var(--fc-edge), 0 18px 36px rgba(31, 37, 51, .10);
-  overflow: hidden; display: flex; flex-direction: column; min-height: 440px;
+  overflow: hidden; display: flex; flex-direction: column; height: 100%; min-height: 0;
 }
 .fc-back { transform: rotateY(180deg); }
 
@@ -385,7 +414,7 @@ p.page-subtitle {
 .fc-band-rank { font: 800 13px var(--fc-body); background: rgba(255, 255, 255, .22); border-radius: 99px; padding: 2px 10px; font-variant-numeric: tabular-nums; }
 
 /* Front */
-.fc-front-body { flex: 1; display: grid; place-items: center; align-content: center; gap: 6px; padding: 28px 20px 36px; text-align: center; }
+.fc-front-body { flex: 1; min-height: 0; display: grid; place-items: center; align-content: center; gap: 6px; padding: 20px; text-align: center; }
 .fc-big-thai { font: 600 clamp(72px, 22vw, 104px)/1.6 var(--fc-thai); transition: color .2s; }
 .fc-big-thai.is-speaking { color: var(--cat); }
 .fc-big-roman { font: italic 600 26px var(--fc-body); color: var(--fc-muted); margin-bottom: 18px; min-height: 36px; }
@@ -407,15 +436,21 @@ p.page-subtitle {
 @keyframes fc-ring { 50% { box-shadow: 0 5px 0 var(--cat-edge), 0 0 0 14px transparent; } }
 
 /* Back */
-.fc-back-body { flex: 1; display: grid; gap: 16px; padding: 20px 20px 22px; align-content: start; }
-.fc-top { display: grid; gap: 2px; }
-.fc-word { font: 600 34px/1.6 var(--fc-thai); }
+.fc-back-body {
+  flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 12px; padding: 16px 20px 20px; align-content: start;
+}
+.fc-top { display: grid; gap: 0; }
+.fc-word-line { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.fc-word { font: 600 32px/1.6 var(--fc-thai); }
 .fc-word-roman { font: italic 600 17px var(--fc-body); color: var(--fc-muted); }
-.fc-meaning { font: 800 30px/1.15 var(--fc-display); text-wrap: balance; margin-top: 6px; }
+.fc-meaning { font: 800 28px/1.15 var(--fc-display); text-wrap: balance; }
+.fc-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .fc-divider { height: 2px; background: var(--fc-line); border-radius: 2px; }
 .fc-label { font: 800 12px var(--fc-body); letter-spacing: .1em; text-transform: uppercase; color: var(--fc-muted); }
 
-.fc-sentence { display: flex; flex-wrap: wrap; gap: 8px; }
+.fc-sentence { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.fc-sentence.is-long .fc-box-th { font-size: 20px; }
+.fc-sentence.is-long .fc-box { padding: 4px 8px 5px; }
 .fc-box {
   position: relative; display: grid; justify-items: center; padding: 6px 10px 7px; border-radius: 12px; cursor: pointer;
   background: var(--fc-box); color: var(--fc-text); border: 2px solid transparent; border-bottom-width: 4px;
@@ -442,7 +477,8 @@ p.page-subtitle {
 /* Meaning bubble above a word box (tap, or hover for half a second) */
 .fc-peek {
   position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%);
-  background: var(--fc-text); color: #fff; font: 700 14px/1.3 var(--fc-body); white-space: nowrap;
+  background: var(--fc-text); color: #fff; font: 700 14px/1.3 var(--fc-body); white-space: normal;
+  width: max-content; max-width: 200px; text-align: center;
   padding: 6px 10px; border-radius: 10px; box-shadow: 0 6px 16px rgba(31, 37, 51, .25); z-index: 2;
   pointer-events: none; animation: fc-peek-in .15s ease-out;
 }
@@ -451,9 +487,15 @@ p.page-subtitle {
   border: 6px solid transparent; border-top-color: var(--fc-text);
 }
 @keyframes fc-peek-in { from { opacity: 0; transform: translate(-50%, 4px); } }
+/* Near the card's edges the bubble lines up with the word's edge instead */
+.fc-peek.align-left { left: 0; transform: none; animation-name: fc-peek-in-side; }
+.fc-peek.align-left::after { left: 22px; }
+.fc-peek.align-right { left: auto; right: 0; transform: none; animation-name: fc-peek-in-side; }
+.fc-peek.align-right::after { left: auto; right: 16px; transform: none; }
+@keyframes fc-peek-in-side { from { opacity: 0; transform: translateY(4px); } }
 
 /* Romanization switch + "On tap" placeholders */
-.fc-settings { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: -8px; }
+.fc-settings { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: -4px; }
 .fc-settings-label { font: 800 12px var(--fc-body); letter-spacing: .08em; text-transform: uppercase; color: var(--fc-muted); }
 .fc-seg { display: inline-flex; background: var(--fc-line); border-radius: 12px; padding: 3px; gap: 2px; }
 .fc-seg button {
@@ -490,6 +532,12 @@ p.page-subtitle {
   .fc-card, .fc-box, .fc-play, .fc-btn, .fc-progress span { transition: none; }
   .fc-play.is-playing { animation: none; }
 }
+
+/* Flashcards page: keep the top compact so the card fits on screen */
+body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
+.fc-page-title { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; max-width: 600px; margin-inline: auto; }
+.fc-page-title h1 { font: 800 24px var(--font-display), system-ui, sans-serif; margin: 0; }
+.fc-page-title span { color: var(--color-muted); font-size: 14px; }
 
 /* Error page (vocabulary/error.js) */
 .deck-btn {

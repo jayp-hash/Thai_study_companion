@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
 const SLOW_RATE = 0.75; // "Slow" button: 75% speed, same pitch
@@ -185,6 +185,7 @@ export default function Deck({ words }) {
   const [romanMode, setRomanMode] = useRomanMode();
   const [revealed, setRevealed] = useState(() => new Set()); // which romanizations were tapped open
   const [peek, setPeek] = useState(-1); // which word box shows its meaning bubble
+  const [peekAlign, setPeekAlign] = useState('center'); // keeps the bubble inside the card
   const peekTimer = useRef(0);
   const hoverTimer = useRef(0);
 
@@ -192,20 +193,63 @@ export default function Deck({ words }) {
   const isRevealed = (key) => revealed.has(key);
 
   // Meaning bubble: stays for 2.5 seconds after a tap
-  const showPeek = (k, ms = 2500) => {
+  const showPeek = (k, ms, el) => {
     clearTimeout(peekTimer.current);
+    // Near the card's left or right edge, line the bubble up with that
+    // edge of the word instead of centring it, so it never spills outside.
+    if (el) {
+      const face = el.closest('.fc-face').getBoundingClientRect();
+      const box = el.getBoundingClientRect();
+      const mid = box.left + box.width / 2;
+      setPeekAlign(mid - face.left < 120 ? 'left' : face.right - mid < 120 ? 'right' : 'center');
+    }
     setPeek(k);
     peekTimer.current = ms ? setTimeout(() => { setPeek(-1); peekTimer.current = 0; }, ms) : 0;
   };
   // On a computer: rest the mouse on a word for half a second
-  const hoverIn = (k) => {
+  const hoverIn = (k, el) => {
     clearTimeout(hoverTimer.current);
-    hoverTimer.current = setTimeout(() => showPeek(k, 0), 500);
+    hoverTimer.current = setTimeout(() => showPeek(k, 0, el), 500);
   };
   const hoverOut = () => {
     clearTimeout(hoverTimer.current);
     if (!peekTimer.current) setPeek(-1);
   };
+
+  // Card height: the card fills the screen below the toolbar, the same
+  // height for every word, so nothing ever needs scrolling to reach.
+  const stageRef = useRef(null);
+  const [cardHeight, setCardHeight] = useState(null);
+  useLayoutEffect(() => {
+    function measure() {
+      if (!stageRef.current) return;
+      const top = stageRef.current.getBoundingClientRect().top + window.scrollY;
+      setCardHeight(Math.round(Math.max(380, Math.min(620, window.innerHeight - top - 24))));
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  // Swipe left / right on a touchscreen to change card
+  const swipe = useRef(null);
+  const swiped = useRef(false);
+  const onPointerDown = (e) => {
+    swiped.current = false;
+    if (e.pointerType !== 'mouse') swipe.current = { x: e.clientX, y: e.clientY };
+  };
+  const onPointerUp = (e) => {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      swiped.current = true; // so the tap that ends a swipe doesn't also flip the card
+      dx < 0 ? nextRef.current() : goRef.current(-1);
+    }
+  };
+  const nextRef = useRef(() => {});
+  const goRef = useRef(() => {});
 
   // New card: hide bubbles and re-hide romanization
   const position = (order || words.slice(setIndex * SET_SIZE, setIndex * SET_SIZE + SET_SIZE))[cardIndex]?.position;
@@ -255,6 +299,8 @@ export default function Deck({ words }) {
   }
 
   const next = () => (isLastCard && hasNextSet ? chooseSet(setIndex + 1) : go(1));
+  nextRef.current = next;
+  goRef.current = go;
 
   // Keyboard: ← → to move, space to flip
   useEffect(() => {
@@ -330,11 +376,17 @@ export default function Deck({ words }) {
         </div>
       </div>
 
+      <div className="fc-stage" ref={stageRef} style={cardHeight ? { '--fc-h': `${cardHeight}px` } : undefined}>
+        <button type="button" className="fc-arrow prev" onClick={() => go(-1)} disabled={cardIndex === 0} aria-label="Previous card">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
       <div className="fc-zone">
         <div
           className={`fc-card${flipped ? ' is-flipped' : ''}`}
           style={catStyle}
-          onClick={() => flip()}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onClick={() => { if (!swiped.current) flip(); swiped.current = false; }}
           role="button"
           tabIndex={0}
           aria-label={flipped ? `${word.thai}, ${cleanMeaning(word.english)}. Press to flip back.` : `${word.thai}. Press to see the meaning.`}
@@ -357,9 +409,11 @@ export default function Deck({ words }) {
             {band}
             <div className="fc-back-body">
               <div className="fc-top">
-                <div className="fc-word" lang="th">{word.thai}</div>
-                <div className="fc-word-roman">
-                  <Roman text={word.romanization} mode={romanMode} revealed={isRevealed('back')} onReveal={() => reveal('back')} />
+                <div className="fc-word-line">
+                  <span className="fc-word" lang="th">{word.thai}</span>
+                  <span className="fc-word-roman">
+                    <Roman text={word.romanization} mode={romanMode} revealed={isRevealed('back')} onReveal={() => reveal('back')} />
+                  </span>
                 </div>
                 <div className="fc-meaning">{cleanMeaning(word.english)}</div>
               </div>
@@ -368,8 +422,24 @@ export default function Deck({ words }) {
 
               {sentence ? (
                 <>
-                  <div className="fc-label">In a sentence</div>
-                  <div className="fc-sentence" lang="th">
+                  <div className="fc-label-row">
+                    <span className="fc-label">In a sentence</span>
+                    <div className="fc-controls">
+                      <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, rate)} />
+                      <button
+                        type="button"
+                        className={`fc-slow${slow ? ' is-on' : ''}`}
+                        aria-pressed={slow}
+                        onClick={(e) => { e.stopPropagation(); setSlow((s) => !s); }}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
+                        </svg>
+                        Slow
+                      </button>
+                    </div>
+                  </div>
+                  <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
                     {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
                       const id = `box-${k}`;
                       const isTarget = w.th === word.thai;
@@ -386,12 +456,12 @@ export default function Deck({ words }) {
                             e.stopPropagation();
                             player.play(id, w.th, rate);
                             if (romanMode === 'tap') reveal(id);
-                            if (w.en) showPeek(k);
+                            if (w.en) showPeek(k, 2500, e.currentTarget);
                           }}
-                          onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k)}
+                          onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k, e.currentTarget)}
                           onPointerLeave={(e) => e.pointerType === 'mouse' && hoverOut()}
                         >
-                          {peek === k && w.en && <span className="fc-peek" role="tooltip">{w.en}</span>}
+                          {peek === k && w.en && <span className={`fc-peek align-${peekAlign}`} role="tooltip">{w.en}</span>}
                           <span className="fc-box-th">{w.th}</span>
                           {showRom && <span className="fc-box-rom">{w.rom}</span>}
                           {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
@@ -400,20 +470,6 @@ export default function Deck({ words }) {
                     })}
                   </div>
                   {sentence.english && <div className="fc-english">{sentence.english}</div>}
-                  <div className="fc-controls">
-                    <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, rate)} />
-                    <button
-                      type="button"
-                      className={`fc-slow${slow ? ' is-on' : ''}`}
-                      aria-pressed={slow}
-                      onClick={(e) => { e.stopPropagation(); setSlow((s) => !s); }}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 15c0-4 3.5-7 8-7s7 3 7 6v1H3z" /><path d="M18 13h2a2 2 0 0 0 0-4h-1" /><path d="M6 15v3M15 15v3" />
-                      </svg>
-                      Slow
-                    </button>
-                  </div>
                 </>
               ) : (
                 <p className="fc-soon">Example sentence coming soon</p>
@@ -423,14 +479,13 @@ export default function Deck({ words }) {
         </div>
       </div>
 
-      <div className="fc-nav">
-        <button type="button" className="fc-btn" onClick={() => go(-1)} disabled={cardIndex === 0} aria-label="Previous card">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
-        </button>
-        <button type="button" className="fc-btn primary" onClick={() => flip()}>
-          {flipped ? 'Show word' : 'Flip'}
-        </button>
-        <button type="button" className="fc-btn" onClick={next} disabled={isLastCard && !hasNextSet} aria-label={isLastCard && hasNextSet ? 'Next set' : 'Next card'}>
+        <button
+          type="button"
+          className="fc-arrow next"
+          onClick={next}
+          disabled={isLastCard && !hasNextSet}
+          aria-label={isLastCard && hasNextSet ? 'Next set' : 'Next card'}
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>

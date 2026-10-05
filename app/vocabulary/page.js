@@ -50,12 +50,11 @@ export default async function VocabularyPage() {
 
   return (
     <main className="page">
-      <a href="/" className="back-link">&larr; Back home</a>
-      <p className="eyebrow">Vocabulary</p>
-      <h1 className="page-title">Flashcards</h1>
-      <p className="page-subtitle">
-        {words.length} words, most common first, in sets of 20.
-      </p>
+      {/* Compact title, so the whole card fits on screen without scrolling */}
+      <div className="fc-page-title">
+        <h1>Flashcards</h1>
+        <span>{words.length} words, most common first</span>
+      </div>
 
       <Deck words={words} />
     </main>
