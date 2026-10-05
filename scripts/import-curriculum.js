@@ -109,8 +109,20 @@ async function main() {
       frequency_rank: col(r, 'Avg Rank') ? Number(col(r, 'Avg Rank')) : null,
       sources_count: Number(col(r, 'Sources Count')) || 0,
       notes: col(r, 'Notes') || null,
+      category: r['Category'] || null,
       updated_at: now,
     }));
+
+  // Category names must match app/lib/categories.js, or the card shows a
+  // grey "Vocabulary" band. Typos are listed here so they're easy to fix.
+  const CATEGORY_NAMES = ['People & family', 'Food & drink', 'Time & dates', 'Places & position', 'Actions',
+    'Describing words', 'Numbers & counting', 'Question words', 'Grammar words', 'Things & objects',
+    'Body & health', 'Work & society'];
+  const badCategory = vocab.filter((w) => !CATEGORY_NAMES.includes(w.category));
+  if (badCategory.length) {
+    console.log(`  Words with a missing or unknown category (${badCategory.length}): ` +
+      badCategory.slice(0, 20).map((w) => `${w.thai} ("${w.category || 'blank'}")`).join(', '));
+  }
 
   // --- sentences ---
   const sentences = new Map(); // keyed by Thai text, so duplicates collapse to one row

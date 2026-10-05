@@ -1,5 +1,6 @@
 import { supabasePublic } from '../lib/supabase-public';
 import Deck from './Deck';
+import { categoryFor } from '../lib/categories';
 
 // Re-check the database at most once an hour. So after you re-run the
 // import script, the live site picks up the changes within the hour —
@@ -17,7 +18,7 @@ async function loadWords() {
     // each link to the sentence itself — a JOIN across both tables.
     const { data, error } = await supabasePublic
       .from('vocabulary')
-      .select('id, thai, romanization, english, frequency_rank, word_sentences(is_sample, sentences(id, thai, romanization, english, review_status, words))')
+      .select('id, thai, romanization, english, frequency_rank, category, word_sentences(is_sample, sentences(id, thai, romanization, english, review_status, words))')
       .order('frequency_rank', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -31,6 +32,7 @@ async function loadWords() {
     thai: w.thai,
     romanization: w.romanization,
     english: w.english,
+    category: categoryFor(w.category), // { name, color, edge } for the card's band
     // One sample sentence per card: the one chosen in the Sentence Worksheet.
     // Words without a chosen sentence show "coming soon" for now.
     sentences: (w.word_sentences || [])
