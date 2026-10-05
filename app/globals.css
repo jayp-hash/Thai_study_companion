@@ -442,10 +442,13 @@ p.page-subtitle {
 }
 .fc-top { display: flex; align-items: center; gap: 16px; }
 .fc-top-text { display: grid; gap: 0; min-width: 0; }
+/* With the play buttons on the left, the word sits on the right side */
+.fc-top.has-controls .fc-top-text { margin-left: auto; text-align: right; justify-items: end; }
+.fc-top.has-controls .fc-word-line { justify-content: flex-end; }
 .fc-word-line { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.fc-word { font: 600 calc(var(--fc-s, 1) * 32px)/1.6 var(--fc-thai); }
+.fc-word { font: 700 calc(var(--fc-s, 1) * 42px)/1.55 var(--fc-thai); }
 .fc-word-roman { font: italic 600 calc(var(--fc-s, 1) * 17px) var(--fc-body); color: var(--fc-muted); }
-.fc-meaning { font: 800 calc(var(--fc-s, 1) * 26px)/1.15 var(--fc-display); text-wrap: balance; }
+.fc-meaning { font: 700 calc(var(--fc-s, 1) * 19px)/1.3 var(--fc-body); color: var(--fc-text); text-wrap: balance; }
 .fc-ex-controls { display: flex; align-items: center; gap: 10px; flex: none; }
 /* Turtle: plays the sentence slowly (small round button under play) */
 .fc-turtle {
