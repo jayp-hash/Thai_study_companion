@@ -191,7 +191,15 @@ async function main() {
         } else if (roms.length !== boxes.length) {
           console.log(`  Word boxes skipped for "${word}": ${boxes.length} Thai words but ${roms.length} romanized words`);
         } else {
-          sentences.get(thai).words = boxes.map((th, k) => ({ th, rom: roms[k] }));
+          // Word meanings: what each box means IN THIS SENTENCE ("I|am (located)|at|home"),
+          // shown in a bubble when the learner taps or hovers a word.
+          const meanings = (r['Word meanings (Claude fills in)'] || '').split('|').map((x) => x.trim());
+          const hasMeanings = meanings.filter(Boolean).length > 0;
+          if (hasMeanings && meanings.length !== boxes.length) {
+            console.log(`  Word meanings skipped for "${word}": ${boxes.length} words but ${meanings.length} meanings`);
+          }
+          const useMeanings = hasMeanings && meanings.length === boxes.length;
+          sentences.get(thai).words = boxes.map((th, k) => ({ th, rom: roms[k], ...(useMeanings && meanings[k] ? { en: meanings[k] } : {}) }));
         }
       }
     }

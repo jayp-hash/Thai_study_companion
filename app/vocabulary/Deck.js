@@ -124,6 +124,50 @@ function shuffle(list) {
   return a;
 }
 
+// Romanization setting: 'show' | 'tap' (hidden until tapped) | 'hide'.
+// Remembered on this device. Later, with accounts, this can follow the
+// learner's progress instead.
+const ROMAN_KEY = 'tsc-romanization';
+const ROMAN_MODES = [
+  { id: 'show', label: 'Show' },
+  { id: 'tap', label: 'On tap' },
+  { id: 'hide', label: 'Hide' },
+];
+
+function useRomanMode() {
+  const [mode, setMode] = useState('show');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(ROMAN_KEY);
+      if (ROMAN_MODES.some((m) => m.id === saved)) setMode(saved);
+    } catch {}
+  }, []);
+  const change = (m) => {
+    setMode(m);
+    try { localStorage.setItem(ROMAN_KEY, m); } catch {}
+  };
+  return [mode, change];
+}
+
+// Romanization that respects the setting. In "On tap" mode it shows a
+// dotted placeholder that reveals the romanization when tapped.
+function Roman({ text, mode, revealed, onReveal, className }) {
+  if (!text || mode === 'hide') return null;
+  if (mode === 'tap' && !revealed) {
+    return (
+      <button
+        type="button"
+        className={`fc-roman-hidden ${className || ''}`}
+        aria-label="Show romanization"
+        onClick={(e) => { e.stopPropagation(); onReveal(); }}
+      >
+        <span aria-hidden="true">• • •</span>
+      </button>
+    );
+  }
+  return <span className={className}>{text}</span>;
+}
+
 function hexToRgba(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
@@ -138,6 +182,40 @@ export default function Deck({ words }) {
   const [flipped, setFlipped] = useState(false);
   const [slow, setSlow] = useState(false);
   const player = usePlayer();
+  const [romanMode, setRomanMode] = useRomanMode();
+  const [revealed, setRevealed] = useState(() => new Set()); // which romanizations were tapped open
+  const [peek, setPeek] = useState(-1); // which word box shows its meaning bubble
+  const peekTimer = useRef(0);
+  const hoverTimer = useRef(0);
+
+  const reveal = (key) => setRevealed((r) => new Set(r).add(key));
+  const isRevealed = (key) => revealed.has(key);
+
+  // Meaning bubble: stays for 2.5 seconds after a tap
+  const showPeek = (k, ms = 2500) => {
+    clearTimeout(peekTimer.current);
+    setPeek(k);
+    peekTimer.current = ms ? setTimeout(() => { setPeek(-1); peekTimer.current = 0; }, ms) : 0;
+  };
+  // On a computer: rest the mouse on a word for half a second
+  const hoverIn = (k) => {
+    clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => showPeek(k, 0), 500);
+  };
+  const hoverOut = () => {
+    clearTimeout(hoverTimer.current);
+    if (!peekTimer.current) setPeek(-1);
+  };
+
+  // New card: hide bubbles and re-hide romanization
+  const position = (order || words.slice(setIndex * SET_SIZE, setIndex * SET_SIZE + SET_SIZE))[cardIndex]?.position;
+  useEffect(() => {
+    setRevealed(new Set());
+    setPeek(-1);
+    clearTimeout(peekTimer.current);
+    peekTimer.current = 0;
+  }, [position]);
+  useEffect(() => () => { clearTimeout(peekTimer.current); clearTimeout(hoverTimer.current); }, []);
 
   const setWords = useMemo(
     () => words.slice(setIndex * SET_SIZE, setIndex * SET_SIZE + SET_SIZE),
@@ -234,6 +312,24 @@ export default function Deck({ words }) {
         </button>
       </div>
 
+      <div className="fc-settings" role="radiogroup" aria-label="Romanization">
+        <span className="fc-settings-label">Romanization</span>
+        <div className="fc-seg">
+          {ROMAN_MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              role="radio"
+              aria-checked={romanMode === m.id}
+              className={romanMode === m.id ? 'is-on' : ''}
+              onClick={() => { setRomanMode(m.id); setRevealed(new Set()); }}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="fc-zone">
         <div
           className={`fc-card${flipped ? ' is-flipped' : ''}`}
@@ -249,7 +345,9 @@ export default function Deck({ words }) {
             {band}
             <div className="fc-front-body">
               <div className={`fc-big-thai${player.playing === 'word' ? ' is-speaking' : ''}`} lang="th">{word.thai}</div>
-              <div className="fc-big-roman">{word.romanization}</div>
+              <div className="fc-big-roman">
+                <Roman text={word.romanization} mode={romanMode} revealed={isRevealed('front')} onReveal={() => reveal('front')} />
+              </div>
               <PlayButton id="word" label={`Play ${word.thai}`} player={player} onPlay={() => player.play('word', word.thai, rate)} />
             </div>
           </section>
@@ -260,7 +358,9 @@ export default function Deck({ words }) {
             <div className="fc-back-body">
               <div className="fc-top">
                 <div className="fc-word" lang="th">{word.thai}</div>
-                <div className="fc-word-roman">{word.romanization}</div>
+                <div className="fc-word-roman">
+                  <Roman text={word.romanization} mode={romanMode} revealed={isRevealed('back')} onReveal={() => reveal('back')} />
+                </div>
                 <div className="fc-meaning">{cleanMeaning(word.english)}</div>
               </div>
 
@@ -274,16 +374,27 @@ export default function Deck({ words }) {
                       const id = `box-${k}`;
                       const isTarget = w.th === word.thai;
                       const isOn = karaoke === k || player.playing === id;
+                      // In "On tap" mode, tapping a box also reveals its romanization
+                      const showRom = w.rom && (romanMode === 'show' || (romanMode === 'tap' && isRevealed(id)));
                       return (
                         <button
                           key={k}
                           type="button"
                           className={`fc-box${isTarget ? ' is-target' : ''}${isOn ? ' is-on' : ''}`}
-                          aria-label={`Play ${w.rom || w.th}`}
-                          onClick={(e) => { e.stopPropagation(); player.play(id, w.th, rate); }}
+                          aria-label={`Play ${w.th}${w.en ? `, meaning ${w.en}` : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            player.play(id, w.th, rate);
+                            if (romanMode === 'tap') reveal(id);
+                            if (w.en) showPeek(k);
+                          }}
+                          onPointerEnter={(e) => e.pointerType === 'mouse' && w.en && hoverIn(k)}
+                          onPointerLeave={(e) => e.pointerType === 'mouse' && hoverOut()}
                         >
+                          {peek === k && w.en && <span className="fc-peek" role="tooltip">{w.en}</span>}
                           <span className="fc-box-th">{w.th}</span>
-                          {w.rom && <span className="fc-box-rom">{w.rom}</span>}
+                          {showRom && <span className="fc-box-rom">{w.rom}</span>}
+                          {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
                         </button>
                       );
                     })}

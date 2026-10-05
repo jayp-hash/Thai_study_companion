@@ -386,9 +386,9 @@ p.page-subtitle {
 
 /* Front */
 .fc-front-body { flex: 1; display: grid; place-items: center; align-content: center; gap: 6px; padding: 28px 20px 36px; text-align: center; }
-.fc-big-thai { font: 600 clamp(72px, 22vw, 104px)/1.2 var(--fc-thai); transition: color .2s; }
+.fc-big-thai { font: 600 clamp(72px, 22vw, 104px)/1.6 var(--fc-thai); transition: color .2s; }
 .fc-big-thai.is-speaking { color: var(--cat); }
-.fc-big-roman { font: italic 600 26px var(--fc-body); color: var(--fc-muted); margin-bottom: 18px; }
+.fc-big-roman { font: italic 600 26px var(--fc-body); color: var(--fc-muted); margin-bottom: 18px; min-height: 36px; }
 
 /* Round play button: solid circle, lifts with a halo on hover, presses down */
 .fc-play {
@@ -409,7 +409,7 @@ p.page-subtitle {
 /* Back */
 .fc-back-body { flex: 1; display: grid; gap: 16px; padding: 20px 20px 22px; align-content: start; }
 .fc-top { display: grid; gap: 2px; }
-.fc-word { font: 600 34px/1.25 var(--fc-thai); }
+.fc-word { font: 600 34px/1.6 var(--fc-thai); }
 .fc-word-roman { font: italic 600 17px var(--fc-body); color: var(--fc-muted); }
 .fc-meaning { font: 800 30px/1.15 var(--fc-display); text-wrap: balance; margin-top: 6px; }
 .fc-divider { height: 2px; background: var(--fc-line); border-radius: 2px; }
@@ -417,11 +417,11 @@ p.page-subtitle {
 
 .fc-sentence { display: flex; flex-wrap: wrap; gap: 8px; }
 .fc-box {
-  display: grid; justify-items: center; padding: 6px 10px 7px; border-radius: 12px; cursor: pointer;
+  position: relative; display: grid; justify-items: center; padding: 6px 10px 7px; border-radius: 12px; cursor: pointer;
   background: var(--fc-box); color: var(--fc-text); border: 2px solid transparent; border-bottom-width: 4px;
   font: inherit; transition: background .12s, color .12s, transform .12s, border-color .12s;
 }
-.fc-box-th { font: 600 24px/1.4 var(--fc-thai); }
+.fc-box-th { font: 600 24px/1.75 var(--fc-thai); }
 .fc-box-rom { font: 600 13px/1.2 var(--fc-body); color: var(--fc-muted); transition: color .12s; }
 .fc-box:hover { transform: translateY(-2px); border-color: var(--cat); }
 .fc-box.is-target { border-color: var(--cat); background: var(--cat-tint); }
@@ -438,6 +438,37 @@ p.page-subtitle {
 .fc-slow:active { transform: translateY(4px); box-shadow: none; }
 .fc-slow.is-on { border-color: var(--cat); color: var(--cat); box-shadow: 0 4px 0 var(--cat); }
 .fc-soon { color: var(--fc-muted); font-size: 16px; margin: 0; }
+
+/* Meaning bubble above a word box (tap, or hover for half a second) */
+.fc-peek {
+  position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%);
+  background: var(--fc-text); color: #fff; font: 700 14px/1.3 var(--fc-body); white-space: nowrap;
+  padding: 6px 10px; border-radius: 10px; box-shadow: 0 6px 16px rgba(31, 37, 51, .25); z-index: 2;
+  pointer-events: none; animation: fc-peek-in .15s ease-out;
+}
+.fc-peek::after {
+  content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: var(--fc-text);
+}
+@keyframes fc-peek-in { from { opacity: 0; transform: translate(-50%, 4px); } }
+
+/* Romanization switch + "On tap" placeholders */
+.fc-settings { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: -8px; }
+.fc-settings-label { font: 800 12px var(--fc-body); letter-spacing: .08em; text-transform: uppercase; color: var(--fc-muted); }
+.fc-seg { display: inline-flex; background: var(--fc-line); border-radius: 12px; padding: 3px; gap: 2px; }
+.fc-seg button {
+  border: 0; background: transparent; color: var(--fc-muted); font: 700 13px var(--fc-body);
+  padding: 6px 12px; border-radius: 9px; cursor: pointer;
+}
+.fc-seg button.is-on { background: var(--fc-surface); color: var(--fc-text); box-shadow: 0 1px 3px rgba(31, 37, 51, .15); }
+.fc-seg button:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 1px; }
+.fc-roman-hidden {
+  border: 2px dashed var(--fc-line); background: transparent; color: var(--fc-muted); border-radius: 10px;
+  padding: 2px 14px; font: 800 14px var(--fc-body); letter-spacing: .1em; cursor: pointer;
+}
+.fc-roman-hidden:hover { border-color: var(--cat); color: var(--cat); }
+.fc-roman-hidden:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 2px; }
+.fc-box-rom.is-hidden { letter-spacing: .1em; opacity: .6; }
 
 /* Bottom: back / flip / next */
 .fc-nav { display: grid; grid-template-columns: 64px 1fr 64px; gap: 12px; }
