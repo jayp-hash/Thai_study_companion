@@ -2,7 +2,8 @@
 // Loads the curriculum workbook into Supabase.
 //
 //   Workbook tabs used:  Vocabulary, Sentence Patterns, Sentence Structures,
-//                        and "Sentence Drafts" if it exists.
+//                        "Sentence Drafts" if it exists, and "Sentence Worksheet"
+//                        (one chosen sample sentence per word, for the flashcards).
 //   Supabase tables:     vocabulary, sentences, word_sentences
 //                        (create them first with supabase/001_vocabulary_and_sentences.sql)
 //
@@ -149,6 +150,27 @@ async function main() {
     }
   }
 
+  // --- flashcard sample sentences (Sentence Worksheet tab) ---
+  // One row per word. Where the Thai column is filled in, that sentence
+  // becomes the word's sample sentence on its flashcard.
+  const samples = []; // { word, thai }
+  const worksheet = wb.getWorksheet('Sentence Worksheet');
+  if (worksheet) {
+    for (const r of sheetRows(worksheet)) {
+      const word = r['Word'];
+      const thai = r['Thai (Claude fills in)'];
+      if (!word || !thai) continue;
+      samples.push({ word, thai });
+      if (!sentences.has(thai)) {
+        add({
+          thai, romanization: r['Romanization (Claude fills in)'] || null, english: r['Your English sentence'] || null,
+          category: 'Flashcard sample', sentence_type: guessType(thai),
+          source: 'Sentence Worksheet', review_status: 'needs_native_review',
+        });
+      }
+    }
+  }
+
   // --- write words + sentences ---
   process.stdout.write(`Uploading ${vocab.length} words... `);
   const savedWords = await upsertInBatches('vocabulary', vocab, 'id, thai');
@@ -164,7 +186,11 @@ async function main() {
   // This avoids false matches like มา (come) inside หมา (dog).
   const wordId = new Map(savedWords.map((w) => [w.thai, w.id]));
   const segmenter = new Intl.Segmenter('th', { granularity: 'word' });
-  const links = [];
+  const links = new Map(); // "wordId-sentenceId" -> link, so no link is stored twice
+  const link = (word_id, sentence_id, is_sample = false) => {
+    const key = `${word_id}-${sentence_id}`;
+    links.set(key, { word_id, sentence_id, is_sample: is_sample || links.get(key)?.is_sample || false });
+  };
   for (const s of savedSentences) {
     const parts = [...segmenter.segment(s.thai)].map((x) => x.segment);
     const found = new Set();
@@ -175,25 +201,37 @@ async function main() {
         if (wordId.has(joined)) found.add(wordId.get(joined));
       }
     }
-    for (const id of found) links.push({ word_id: id, sentence_id: s.id });
+    for (const id of found) link(id, s.id);
   }
 
-  process.stdout.write(`Linking words to sentences (${links.length} links)... `);
+  // The chosen sample sentences are linked directly from the worksheet row,
+  // not by guessing — so they always reach the right card.
+  const sentenceId = new Map(savedSentences.map((s) => [s.thai, s.id]));
+  let sampleCount = 0;
+  for (const { word, thai } of samples) {
+    if (!wordId.has(word)) { console.log(`  Sample skipped: "${word}" is not in the Vocabulary tab`); continue; }
+    link(wordId.get(word), sentenceId.get(thai), true);
+    sampleCount++;
+  }
+  const linkRows = [...links.values()];
+
+  process.stdout.write(`Linking words to sentences (${linkRows.length} links)... `);
   const ids = savedSentences.map((s) => s.id);
   const { error: delErr } = await db.from('word_sentences').delete().in('sentence_id', ids);
   if (delErr) throw new Error(`word_sentences delete: ${delErr.message}`);
-  for (let i = 0; i < links.length; i += 1000) {
-    const { error } = await db.from('word_sentences').insert(links.slice(i, i + 1000));
+  for (let i = 0; i < linkRows.length; i += 1000) {
+    const { error } = await db.from('word_sentences').insert(linkRows.slice(i, i + 1000));
     if (error) throw new Error(`word_sentences: ${error.message}`);
   }
   console.log('done');
 
   // --- report ---
-  const covered = new Set(links.map((l) => l.word_id));
+  const covered = new Set(linkRows.map((l) => l.word_id));
   console.log(`\nSummary`);
   console.log(`  Words:      ${savedWords.length}`);
   console.log(`  Sentences:  ${savedSentences.length}`);
   console.log(`  Words with at least one sample sentence: ${covered.size} of ${savedWords.length}`);
+  console.log(`  Flashcard sample sentences (from Sentence Worksheet): ${sampleCount}`);
   if (dupes.length) console.log(`  Skipped duplicate sentences: ${dupes.join(', ')}`);
 
   const missingTop = vocab
