@@ -124,48 +124,104 @@ function shuffle(list) {
   return a;
 }
 
-// Romanization setting: 'show' | 'tap' (hidden until tapped) | 'hide'.
-// Remembered on this device. Later, with accounts, this can follow the
-// learner's progress instead.
-const ROMAN_KEY = 'tsc-romanization';
-const ROMAN_MODES = [
+// ---------- How much help each card gives ----------
+// Help fades per card as the learner marks it "Got it":
+//   level 0 (new / still learning): romanization + English shown
+//   level 1 (got it 1–2 times):     English blurred until tapped
+//   level 2 (got it 3–4 times):     romanization blurred too
+//   level 3 (got it 5+ times):      romanization hidden, English blurred
+// The English is never removed completely, so you can always check.
+// "Auto" follows these levels; the learner can override either one.
+// Saved on this device for now; with accounts it will follow the learner.
+const SETTINGS_KEY = 'tsc-help';
+const PROGRESS_KEY = 'tsc-progress';
+const ROMAN_OPTIONS = [
+  { id: 'auto', label: 'Auto' },
   { id: 'show', label: 'Show' },
-  { id: 'tap', label: 'On tap' },
+  { id: 'tap', label: 'Blur' },
   { id: 'hide', label: 'Hide' },
 ];
+const ENGLISH_OPTIONS = [
+  { id: 'auto', label: 'Auto' },
+  { id: 'show', label: 'Show' },
+  { id: 'tap', label: 'Blur' },
+];
 
-function useRomanMode() {
-  const [mode, setMode] = useState('show');
+const readStore = (key, fallback) => {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+};
+const writeStore = (key, value) => {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+};
+
+function useHelpSettings() {
+  const [settings, setSettings] = useState({ roman: 'auto', english: 'auto' });
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ROMAN_KEY);
-      if (ROMAN_MODES.some((m) => m.id === saved)) setMode(saved);
-    } catch {}
+    const saved = readStore(SETTINGS_KEY, null);
+    if (saved) setSettings((s) => ({ ...s, ...saved }));
   }, []);
-  const change = (m) => {
-    setMode(m);
-    try { localStorage.setItem(ROMAN_KEY, m); } catch {}
-  };
-  return [mode, change];
+  const change = (key, value) => setSettings((s) => {
+    const next = { ...s, [key]: value };
+    writeStore(SETTINGS_KEY, next);
+    return next;
+  });
+  return [settings, change];
 }
 
-// Romanization that respects the setting. In "On tap" mode it shows a
-// dotted placeholder that reveals the romanization when tapped.
+// progress = { "ที่": { got: 3, seen: 1696500000000 }, ... }
+function useProgress() {
+  const [progress, setProgress] = useState({});
+  useEffect(() => { setProgress(readStore(PROGRESS_KEY, {})); }, []);
+  const rate = (thai, knewIt) => setProgress((p) => {
+    const got = knewIt ? (p[thai]?.got || 0) + 1 : 0; // "Still learning" = full help again
+    const next = { ...p, [thai]: { got, seen: Date.now() } };
+    writeStore(PROGRESS_KEY, next);
+    return next;
+  });
+  const reset = () => { writeStore(PROGRESS_KEY, {}); setProgress({}); };
+  return [progress, rate, reset];
+}
+
+const levelFor = (got = 0) => (got >= 5 ? 3 : got >= 3 ? 2 : got >= 1 ? 1 : 0);
+
+// Romanization that respects the help level. "tap" = blurred until tapped.
 function Roman({ text, mode, revealed, onReveal, className }) {
   if (!text || mode === 'hide') return null;
   if (mode === 'tap' && !revealed) {
     return (
       <button
         type="button"
-        className={`fc-roman-hidden ${className || ''}`}
+        className={`fc-blur ${className || ''}`}
         aria-label="Show romanization"
         onClick={(e) => { e.stopPropagation(); onReveal(); }}
       >
-        <span aria-hidden="true">• • •</span>
+        <span aria-hidden="true">{text}</span>
       </button>
     );
   }
   return <span className={className}>{text}</span>;
+}
+
+function Segmented({ label, options, value, onChange }) {
+  return (
+    <div className="fc-panel-row">
+      <span className="fc-panel-label">{label}</span>
+      <div className="fc-seg" role="radiogroup" aria-label={label}>
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={value === o.id}
+            className={value === o.id ? 'is-on' : ''}
+            onClick={() => onChange(o.id)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function hexToRgba(hex, alpha) {
@@ -181,7 +237,18 @@ export default function Deck({ words }) {
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const player = usePlayer();
-  const [romanMode, setRomanMode] = useRomanMode();
+  const [help, setHelp] = useHelpSettings();
+  const [progress, rateWord, resetProgress] = useProgress();
+  const [panelOpen, setPanelOpen] = useState(false);
+  const panelRef = useRef(null);
+
+  // Close the settings panel when tapping anywhere else
+  useEffect(() => {
+    if (!panelOpen) return;
+    const close = (e) => { if (panelRef.current && !panelRef.current.contains(e.target)) setPanelOpen(false); };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [panelOpen]);
   const [revealed, setRevealed] = useState(() => new Set()); // which romanizations were tapped open
   const [peek, setPeek] = useState(-1); // which word box shows its meaning bubble
   const [peekAlign, setPeekAlign] = useState('center'); // keeps the bubble inside the card
@@ -330,6 +397,13 @@ export default function Deck({ words }) {
   nextRef.current = next;
   goRef.current = go;
 
+  // "Still learning" / "Got it": record it for this word, then go to the next card
+  const rateCard = (knewIt) => { if (word) { rateWord(word.thai, knewIt); next(); } };
+  const rateRef = useRef(rateCard);
+  rateRef.current = rateCard;
+  const flippedRef = useRef(flipped);
+  flippedRef.current = flipped;
+
   // Keyboard: ← → to move, space to flip
   useEffect(() => {
     function onKey(e) {
@@ -337,6 +411,7 @@ export default function Deck({ words }) {
       if (e.key === 'ArrowRight') go(1);
       else if (e.key === 'ArrowLeft') go(-1);
       else if (e.key === ' ') { e.preventDefault(); flip(); }
+      else if (flippedRef.current && (e.key === '1' || e.key === '2')) rateRef.current(e.key === '2');
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -344,7 +419,7 @@ export default function Deck({ words }) {
 
   // Re-fit whenever the card, its size, or the romanization setting changes,
   // and once the fonts have loaded (they change the text's size).
-  useLayoutEffect(() => { fit(); }, [fit, word, cardHeight, romanMode, revealed]);
+  useLayoutEffect(() => { fit(); }, [fit, word, cardHeight, help, progress, revealed]);
   useEffect(() => {
     document.fonts?.ready.then(fit);
     window.addEventListener('resize', fit);
@@ -356,12 +431,20 @@ export default function Deck({ words }) {
   const cat = word.category || DEFAULT_CATEGORY;
   const catStyle = { '--cat': cat.color, '--cat-edge': cat.edge, '--cat-tint': hexToRgba(cat.color, 0.14) };
   const rate = 1; // words and word boxes always play at normal speed
+  const level = levelFor(progress[word.thai]?.got);
+  const romanMode = help.roman === 'auto' ? (level >= 3 ? 'hide' : level >= 2 ? 'tap' : 'show') : help.roman;
+  const englishMode = help.english === 'auto' ? (level >= 1 ? 'tap' : 'show') : help.english;
   const karaoke = player.playing === 'sentence' || player.playing === 'sentence-slow'
     ? activeBox(sentence?.words, player.progress) : -1;
   const band = (
     <div className="fc-band">
       <span className="fc-band-cat">{cat.name}</span>
-      <span className="fc-band-rank">#{word.position}</span>
+      <span className="fc-band-right">
+        <span className="fc-level" role="img" aria-label={`How well you know it: ${level} of 3`}>
+          {[1, 2, 3].map((i) => <i key={i} className={i <= level ? 'on' : ''} />)}
+        </span>
+        <span className="fc-band-rank">#{word.position}</span>
+      </span>
     </div>
   );
 
@@ -394,23 +477,27 @@ export default function Deck({ words }) {
             <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
           </svg>
         </button>
-      </div>
-
-      <div className="fc-settings" role="radiogroup" aria-label="Romanization">
-        <span className="fc-settings-label">Romanization</span>
-        <div className="fc-seg">
-          {ROMAN_MODES.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              role="radio"
-              aria-checked={romanMode === m.id}
-              className={romanMode === m.id ? 'is-on' : ''}
-              onClick={() => { setRomanMode(m.id); setRevealed(new Set()); }}
-            >
-              {m.label}
-            </button>
-          ))}
+        <div className="fc-aa-wrap" ref={panelRef}>
+          <button
+            type="button"
+            className={`fc-aa${panelOpen ? ' is-on' : ''}`}
+            aria-expanded={panelOpen}
+            aria-label="Help settings: romanization and English"
+            title="Romanization and English"
+            onClick={() => setPanelOpen((o) => !o)}
+          >
+            Aa
+          </button>
+          {panelOpen && (
+            <div className="fc-panel" role="dialog" aria-label="Help settings">
+              <Segmented label="Romanization" options={ROMAN_OPTIONS} value={help.roman} onChange={(v) => { setHelp('roman', v); setRevealed(new Set()); }} />
+              <Segmented label="English sentence" options={ENGLISH_OPTIONS} value={help.english} onChange={(v) => { setHelp('english', v); setRevealed(new Set()); }} />
+              <p className="fc-panel-note">Auto gives less help on a card each time you mark it &ldquo;Got it&rdquo;.</p>
+              <button type="button" className="fc-panel-reset" onClick={() => { resetProgress(); setRevealed(new Set()); }}>
+                Reset my progress on this device
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -504,16 +591,35 @@ export default function Deck({ words }) {
                           {peek === k && w.en && <span className={`fc-peek align-${peekAlign}`} role="tooltip">{w.en}</span>}
                           <span className="fc-box-th">{w.th}</span>
                           {showRom && <span className="fc-box-rom">{w.rom}</span>}
-                          {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom is-hidden" aria-hidden="true">• • •</span>}
+                          {romanMode === 'tap' && w.rom && !showRom && <span className="fc-box-rom fc-blur-text" aria-hidden="true">{w.rom}</span>}
                         </button>
                       );
                     })}
                   </div>
-                  {sentence.english && <div className="fc-english">{sentence.english}</div>}
+                  {sentence.english && (englishMode === 'tap' && !isRevealed('english') ? (
+                    <button
+                      type="button"
+                      className="fc-english fc-blur"
+                      aria-label="Show the English translation"
+                      onClick={(e) => { e.stopPropagation(); reveal('english'); }}
+                    >
+                      <span aria-hidden="true">{sentence.english}</span>
+                    </button>
+                  ) : (
+                    <div className="fc-english">{sentence.english}</div>
+                  ))}
                 </>
               ) : (
                 <p className="fc-soon">Example sentence coming soon</p>
               )}
+            </div>
+            <div className="fc-rate">
+              <button type="button" className="fc-rate-btn again" onClick={(e) => { e.stopPropagation(); rateCard(false); }}>
+                Still learning
+              </button>
+              <button type="button" className="fc-rate-btn got" onClick={(e) => { e.stopPropagation(); rateCard(true); }}>
+                Got it
+              </button>
             </div>
           </section>
         </div>

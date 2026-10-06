@@ -345,7 +345,7 @@ p.page-subtitle {
 }
 
 /* Toolbar: set picker, progress bar, count, shuffle */
-.fc-toolbar { display: grid; grid-template-columns: auto 1fr auto auto; gap: 12px; align-items: center; }
+.fc-toolbar { display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 10px; align-items: center; }
 .fc-set select {
   font: 700 14px var(--fc-body); color: var(--fc-text); background: var(--fc-surface);
   border: 2px solid var(--fc-line); border-radius: 12px; padding: 7px 10px; cursor: pointer;
@@ -564,6 +564,59 @@ body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
   body:has(.fc) .page { padding-inline: 16px; }
   .fc-back-body { padding: 14px 16px 16px; }
   .fc-box { padding: 5px 8px 6px; }
+}
+
+/* ---------- Help that fades as you learn ---------- */
+
+/* Blurred until tapped: you can see something is there, tap to read it */
+.fc-blur {
+  border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; text-align: inherit;
+  cursor: pointer; border-radius: 8px;
+}
+.fc-blur > span, .fc-blur-text { filter: blur(6px); user-select: none; opacity: .75; transition: filter .2s, opacity .2s; }
+.fc-blur:hover > span { filter: blur(4px); opacity: .9; }
+.fc-blur:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
+.fc-english.fc-blur { display: block; width: 100%; }
+
+/* "Still learning" / "Got it" along the bottom of the back of the card */
+.fc-rate { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 16px; }
+.fc-rate-btn {
+  height: 46px; border-radius: 14px; font: 800 15px var(--fc-body); cursor: pointer;
+  transition: transform .08s, box-shadow .08s;
+}
+.fc-rate-btn.again { background: var(--fc-surface); color: var(--fc-text); border: 2px solid var(--fc-line); box-shadow: 0 4px 0 var(--fc-line); }
+.fc-rate-btn.got { background: var(--fc-primary); color: #fff; border: 2px solid var(--fc-primary); box-shadow: 0 4px 0 var(--fc-primary-edge); }
+.fc-rate-btn:active { transform: translateY(4px); box-shadow: none; }
+.fc-rate-btn:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
+
+/* How well you know this card: 3 dots on the band */
+.fc-band-right { display: inline-flex; align-items: center; gap: 10px; }
+.fc-level { display: inline-flex; gap: 4px; }
+.fc-level i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+.fc-level i.on { background: #fff; }
+
+/* "Aa" button and its settings panel */
+.fc-aa-wrap { position: relative; }
+.fc-aa {
+  width: 38px; height: 38px; border-radius: 12px; border: 2px solid var(--fc-line); background: var(--fc-surface);
+  color: var(--fc-text); font: 800 15px var(--fc-display); cursor: pointer; box-shadow: 0 3px 0 var(--fc-line);
+}
+.fc-aa.is-on { border-color: var(--fc-text); }
+.fc-aa:active { transform: translateY(3px); box-shadow: none; }
+.fc-aa:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
+.fc-panel {
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 20; width: min(340px, calc(100vw - 32px));
+  background: var(--fc-surface); border: 2px solid var(--fc-line); border-radius: 16px; padding: 16px;
+  box-shadow: 0 16px 36px rgba(31, 37, 51, .18); display: grid; gap: 14px;
+}
+.fc-panel-row { display: grid; gap: 6px; }
+.fc-panel-label { font: 800 12px var(--fc-body); letter-spacing: .08em; text-transform: uppercase; color: var(--fc-muted); }
+.fc-panel-row .fc-seg { display: flex; }
+.fc-panel-row .fc-seg button { flex: 1; }
+.fc-panel-note { margin: 0; font-size: 14px; color: var(--fc-muted); line-height: 1.4; }
+.fc-panel-reset {
+  justify-self: start; border: 0; background: none; padding: 0; color: var(--fc-muted);
+  font: 700 13px var(--fc-body); text-decoration: underline; cursor: pointer;
 }
 
 /* Error page (vocabulary/error.js) */
