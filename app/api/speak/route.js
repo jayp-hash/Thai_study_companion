@@ -12,8 +12,9 @@
 //
 // Why GET instead of POST: CDNs only cache GET requests.
 //
-// Model is eleven_v3: the only ElevenLabs model that officially supports
-// Thai. multilingual_v2 returns audio but guesses at the pronunciation.
+// Model is eleven_v4 (supports Thai). Chosen by ear in the 2026-10-06 audio
+// lab (scripts/audio-lab.js): v4 was clearer, less rushed and more consistent
+// than eleven_v3 at stability 0.3, which sometimes clipped or sped up words.
 //
 // Voice is Amy for now. Once the ครับ/ค่ะ speech-style switch exists,
 // a `voice` param here will pick between Amy and Chris.
@@ -63,14 +64,16 @@ export async function GET(request) {
       },
       body: JSON.stringify({
         text: speechText,
-        model_id: 'eleven_v3',
-        // Stability trades naturalness for consistency. Amy at 0.3 sounded
-        // most natural and was mostly consistent in Jay's 2026-10-02 tests.
+        model_id: 'eleven_v4',
+        // Stability trades expressiveness for consistency. For learners,
+        // consistency wins: the same word should sound the same every time.
+        // Speed 0.85 = a little slower than normal conversation.
         voice_settings: {
-          stability: 0.3,
+          stability: 0.8,
           similarity_boost: 0.75,
           style: 0,
           use_speaker_boost: true,
+          speed: 0.85,
         },
       }),
     });

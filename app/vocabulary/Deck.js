@@ -12,10 +12,14 @@ const DEFAULT_CATEGORY = { name: 'Vocabulary', color: '#4F5BD5', edge: '#353FA6'
 // visit, so replays are instant and don't spend ElevenLabs credit.
 const audioCache = new Map();
 
+// Bump this when the voice settings change. Clips are cached for a year by
+// the browser and Vercel, so a new number makes everyone get the new voice.
+const AUDIO_VERSION = 2; // 2 = eleven_v4, stability 0.8, speed 0.85
+
 async function loadAudio(text) {
   if (audioCache.has(text)) return audioCache.get(text);
   // GET so the browser and Vercel's CDN can cache the clip (see api/speak)
-  const res = await fetch(`/api/speak?text=${encodeURIComponent(text)}`);
+  const res = await fetch(`/api/speak?text=${encodeURIComponent(text)}&v=${AUDIO_VERSION}`);
   if (!res.ok) throw new Error('speak request failed');
   const audio = new Audio(URL.createObjectURL(await res.blob()));
   audio.preservesPitch = true;
