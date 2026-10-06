@@ -419,12 +419,18 @@ export default function Deck({ words }) {
 
   // Keyboard: ← → to move, space to flip
   useEffect(() => {
+    // Arrow keys always move between cards, even if a button was clicked
+    // last (it loses focus, so it doesn't stay highlighted). Only the set
+    // dropdown keeps its arrow keys. Space flips the card unless a button is
+    // focused, where space presses that button as usual.
     function onKey(e) {
-      if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
-      if (e.key === 'ArrowRight') nextRef.current();
-      else if (e.key === 'ArrowLeft') goRef.current(-1);
-      else if (e.key === ' ') { e.preventDefault(); flip(); }
-      else if (flippedRef.current && (e.key === '1' || e.key === '2')) rateRef.current(e.key === '2');
+      const tag = e.target.tagName;
+      if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const move = (fn) => { e.preventDefault(); if (tag === 'BUTTON') e.target.blur(); fn(); };
+      if (e.key === 'ArrowRight') move(() => nextRef.current());
+      else if (e.key === 'ArrowLeft') move(() => goRef.current(-1));
+      else if (e.key === ' ' && tag !== 'BUTTON') { e.preventDefault(); flip(); }
+      else if (flippedRef.current && (e.key === '1' || e.key === '2')) move(() => rateRef.current(e.key === '2'));
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
