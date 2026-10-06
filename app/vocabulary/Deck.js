@@ -394,8 +394,21 @@ export default function Deck({ words }) {
   }
 
   const next = () => (isLastCard && hasNextSet ? chooseSet(setIndex + 1) : go(1));
+  // Back from the first card of a set goes to the last card of the set before
+  const isFirstCard = cardIndex === 0;
+  const prev = () => {
+    if (isFirstCard && setIndex > 0) {
+      stop();
+      setSetIndex(setIndex - 1);
+      setOrder(null);
+      setCardIndex(SET_SIZE - 1);
+      setFlipped(false);
+    } else {
+      go(-1);
+    }
+  };
   nextRef.current = next;
-  goRef.current = go;
+  goRef.current = (step) => (step < 0 ? prev() : go(step));
 
   // "Still learning" / "Got it": record it for this word, then go to the next card
   const rateCard = (knewIt) => { if (word) { rateWord(word.thai, knewIt); next(); } };
@@ -408,8 +421,8 @@ export default function Deck({ words }) {
   useEffect(() => {
     function onKey(e) {
       if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
-      if (e.key === 'ArrowRight') go(1);
-      else if (e.key === 'ArrowLeft') go(-1);
+      if (e.key === 'ArrowRight') nextRef.current();
+      else if (e.key === 'ArrowLeft') goRef.current(-1);
       else if (e.key === ' ') { e.preventDefault(); flip(); }
       else if (flippedRef.current && (e.key === '1' || e.key === '2')) rateRef.current(e.key === '2');
     }
@@ -502,7 +515,7 @@ export default function Deck({ words }) {
       </div>
 
       <div className="fc-stage" ref={stageRef} style={cardHeight ? { '--fc-h': `${cardHeight}px` } : undefined}>
-        <button type="button" className="fc-arrow prev" onClick={() => go(-1)} disabled={cardIndex === 0} aria-label="Previous card">
+        <button type="button" className="fc-arrow prev" onClick={prev} disabled={isFirstCard && setIndex === 0} aria-label={isFirstCard && setIndex > 0 ? 'Previous set' : 'Previous card'}>
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
         </button>
       <div className="fc-zone">
