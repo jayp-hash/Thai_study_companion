@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
-const SLOW_RATE = 0.75; // turtle button: plays the sentence at 75% speed, same pitch
+const SLOW_RATE = 0.65; // turtle button: 65% of the (already slightly slow) voice, same pitch
 
 // Until words have categories (round 2), every card uses this band.
 const DEFAULT_CATEGORY = { name: 'Vocabulary', color: '#4F5BD5', edge: '#353FA6' };
@@ -16,14 +16,18 @@ const audioCache = new Map();
 // the browser and Vercel, so a new number makes everyone get the new voice.
 const AUDIO_VERSION = 2; // 2 = eleven_v4, stability 0.8, speed 0.85
 
+// Female or male voice, from the Aa settings
+let currentVoice = 'female';
+
 async function loadAudio(text) {
-  if (audioCache.has(text)) return audioCache.get(text);
+  const key = `${currentVoice}|${text}`;
+  if (audioCache.has(key)) return audioCache.get(key);
   // GET so the browser and Vercel's CDN can cache the clip (see api/speak)
-  const res = await fetch(`/api/speak?text=${encodeURIComponent(text)}&v=${AUDIO_VERSION}`);
+  const res = await fetch(`/api/speak?text=${encodeURIComponent(text)}&voice=${currentVoice}&v=${AUDIO_VERSION}`);
   if (!res.ok) throw new Error('speak request failed');
   const audio = new Audio(URL.createObjectURL(await res.blob()));
   audio.preservesPitch = true;
-  audioCache.set(text, audio);
+  audioCache.set(key, audio);
   return audio;
 }
 
@@ -145,6 +149,10 @@ const ROMAN_OPTIONS = [
   { id: 'tap', label: 'Blur' },
   { id: 'hide', label: 'Hide' },
 ];
+const VOICE_OPTIONS = [
+  { id: 'female', label: 'Female' },
+  { id: 'male', label: 'Male' },
+];
 const ENGLISH_OPTIONS = [
   { id: 'auto', label: 'Auto' },
   { id: 'show', label: 'Show' },
@@ -159,7 +167,7 @@ const writeStore = (key, value) => {
 };
 
 function useHelpSettings() {
-  const [settings, setSettings] = useState({ roman: 'auto', english: 'auto' });
+  const [settings, setSettings] = useState({ roman: 'auto', english: 'auto', voice: 'female' });
   useEffect(() => {
     const saved = readStore(SETTINGS_KEY, null);
     if (saved) setSettings((s) => ({ ...s, ...saved }));
@@ -185,6 +193,15 @@ function useProgress() {
   const reset = () => { writeStore(PROGRESS_KEY, {}); setProgress({}); };
   return [progress, rate, reset];
 }
+
+// One-time tips: shown on these cards until closed, then never again
+const TIPS_KEY = 'tsc-tips-seen';
+const TIPS = {
+  'ครับ': 'Men end polite sentences with ครับ. Women use ค่ะ.',
+  'ค่ะ': 'Women end polite sentences with ค่ะ (คะ in questions). Men use ครับ.',
+  'ผม': 'ผม is "I" for men. Women usually say ฉัน.',
+  'ฉัน': 'ฉัน is "I". Women use it most, men usually say ผม. The example sentences use ฉัน.',
+};
 
 const levelFor = (got = 0) => (got >= 5 ? 3 : got >= 3 ? 2 : got >= 1 ? 1 : 0);
 
@@ -244,6 +261,14 @@ export default function Deck({ words }) {
   const [help, setHelp] = useHelpSettings();
   const [progress, rateWord, resetProgress] = useProgress();
   const [panelOpen, setPanelOpen] = useState(false);
+  const [tipsSeen, setTipsSeen] = useState(() => new Set());
+  useEffect(() => { setTipsSeen(new Set(readStore(TIPS_KEY, []))); }, []);
+  const closeTip = (thai) => setTipsSeen((s) => {
+    const next = new Set(s).add(thai);
+    writeStore(TIPS_KEY, [...next]);
+    return next;
+  });
+  currentVoice = help.voice || 'female';
   const panelRef = useRef(null);
 
   // Close the settings panel when tapping anywhere else
@@ -442,7 +467,7 @@ export default function Deck({ words }) {
 
   // Re-fit whenever the card, its size, or the romanization setting changes,
   // and once the fonts have loaded (they change the text's size).
-  useLayoutEffect(() => { fit(); }, [fit, word, cardHeight, help, progress, revealed]);
+  useLayoutEffect(() => { fit(); }, [fit, word, cardHeight, help, progress, revealed, tipsSeen]);
   useEffect(() => {
     document.fonts?.ready.then(fit);
     window.addEventListener('resize', fit);
@@ -513,6 +538,7 @@ export default function Deck({ words }) {
           </button>
           {panelOpen && (
             <div className="fc-panel" role="dialog" aria-label="Help settings">
+              <Segmented label="Voice" options={VOICE_OPTIONS} value={help.voice} onChange={(v) => { player.stop(); setHelp('voice', v); }} />
               <Segmented label="Romanization" options={ROMAN_OPTIONS} value={help.roman} onChange={(v) => { setHelp('roman', v); setRevealed(new Set()); }} />
               <Segmented label="English sentence" options={ENGLISH_OPTIONS} value={help.english} onChange={(v) => { setHelp('english', v); setRevealed(new Set()); }} />
               <p className="fc-panel-note">Auto gives less help on a card each time you mark it &ldquo;Got it&rdquo;.</p>
@@ -619,6 +645,12 @@ export default function Deck({ words }) {
                       );
                     })}
                   </div>
+                  {TIPS[word.thai] && !tipsSeen.has(word.thai) && (
+                    <div className="fc-tip" role="note">
+                      <span>{TIPS[word.thai]}</span>
+                      <button type="button" aria-label="Close tip" onClick={(e) => { e.stopPropagation(); closeTip(word.thai); }}>×</button>
+                    </div>
+                  )}
                   {sentence.english && (englishMode === 'tap' && !isRevealed('english') ? (
                     <button
                       type="button"

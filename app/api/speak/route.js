@@ -21,7 +21,20 @@
 
 import { supabasePublic } from '../../lib/supabase-public';
 
-const AMY_VOICE_ID = 'OZxMHsGaBmV5pjMIDIn0';
+const AMY_VOICE_ID = 'OZxMHsGaBmV5pjMIDIn0'; // female voice
+
+// Male voice: ElevenLabs' "Chris". Its ID is looked up by name once and
+// remembered (or set ELEVENLABS_MALE_VOICE_ID in Vercel to skip the lookup).
+let maleVoiceId = process.env.ELEVENLABS_MALE_VOICE_ID || null;
+async function getMaleVoiceId() {
+  if (maleVoiceId) return maleVoiceId;
+  const res = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY } });
+  if (!res.ok) throw new Error(`voice lookup failed: ${res.status}`);
+  const chris = ((await res.json()).voices || []).find((v) => v.name.startsWith('Chris'));
+  if (!chris) throw new Error('male voice "Chris" not found');
+  maleVoiceId = chris.voice_id;
+  return maleVoiceId;
+}
 const MAX_CHARS = 200;
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
@@ -38,7 +51,9 @@ async function isCourseText(text) {
 }
 
 export async function GET(request) {
-  const text = (new URL(request.url).searchParams.get('text') || '').trim();
+  const params = new URL(request.url).searchParams;
+  const text = (params.get('text') || '').trim();
+  const voice = params.get('voice') === 'male' ? 'male' : 'female';
 
   if (!text) {
     return Response.json({ ok: false, error: 'Missing "text".' }, { status: 400 });
@@ -56,7 +71,8 @@ export async function GET(request) {
     // An end-of-sentence period tells the model where to stop cleanly.
     const speechText = /[.!?ๆฯ]\s*$/.test(text) ? text : `${text}.`;
 
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${AMY_VOICE_ID}`, {
+    const voiceId = voice === 'male' ? await getMaleVoiceId() : AMY_VOICE_ID;
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
         'xi-api-key': process.env.ELEVENLABS_API_KEY,
