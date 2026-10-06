@@ -110,12 +110,14 @@ async function main() {
       sources_count: Number(col(r, 'Sources Count')) || 0,
       notes: col(r, 'Notes') || null,
       category: r['Category'] || null,
+      course_order: r['Course Order'] ? Number(r['Course Order']) : null,
+      stage: r['Stage'] || null,
       updated_at: now,
     }));
 
   // Category names must match app/lib/categories.js, or the card shows a
   // grey "Vocabulary" band. Typos are listed here so they're easy to fix.
-  const CATEGORY_NAMES = ['People & family', 'Food & drink', 'Time & dates', 'Places & position', 'Actions',
+  const CATEGORY_NAMES = ['People & animals', 'Food & drink', 'Time & dates', 'Places & position', 'Actions',
     'Describing words', 'Numbers & counting', 'Question words', 'Grammar words', 'Things & objects',
     'Body & health', 'Work & society'];
   const badCategory = vocab.filter((w) => !CATEGORY_NAMES.includes(w.category));

@@ -7,7 +7,7 @@
 // color = the card's band and play button; edge = the darker "3D" edge
 // under buttons. Picked so all 12 are easy to tell apart.
 export const CATEGORIES = {
-  'People & family':    { color: '#E8604C', edge: '#B8442F' },
+  'People & animals':   { color: '#E8604C', edge: '#B8442F' },
   'Food & drink':       { color: '#F08A1C', edge: '#B9640A' },
   'Time & dates':       { color: '#2B86E8', edge: '#1D62AE' },
   'Places & position':  { color: '#21A867', edge: '#16794A' },

@@ -19,6 +19,8 @@ async function loadWords() {
     const { data, error } = await supabasePublic
       .from('vocabulary')
       .select('id, thai, romanization, english, frequency_rank, category, word_sentences(is_sample, sentences(id, thai, romanization, english, review_status, words))')
+      // Learner order (survival → everyday → formal), set in the workbook
+      .order('course_order', { ascending: true, nullsFirst: false })
       .order('frequency_rank', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -53,7 +55,7 @@ export default async function VocabularyPage() {
       {/* Compact title, so the whole card fits on screen without scrolling */}
       <div className="fc-page-title">
         <h1>Flashcards</h1>
-        <span>{words.length} words, most common first</span>
+        <span>{words.length} words, most useful first</span>
       </div>
 
       <Deck words={words} />
