@@ -253,9 +253,16 @@ async function main() {
   const linkRows = [...links.values()];
 
   process.stdout.write(`Linking words to sentences (${linkRows.length} links)... `);
+  // Old sample sentences (ones replaced in the worksheet) may still be marked
+  // as a word's sample. Clear every sample mark first so the new ones fit the
+  // "one sample per word" rule.
+  const { error: unmarkErr } = await db.from('word_sentences').update({ is_sample: false }).eq('is_sample', true);
+  if (unmarkErr) throw new Error(`word_sentences unmark: ${unmarkErr.message}`);
   const ids = savedSentences.map((s) => s.id);
-  const { error: delErr } = await db.from('word_sentences').delete().in('sentence_id', ids);
-  if (delErr) throw new Error(`word_sentences delete: ${delErr.message}`);
+  for (let i = 0; i < ids.length; i += 200) {
+    const { error: delErr } = await db.from('word_sentences').delete().in('sentence_id', ids.slice(i, i + 200));
+    if (delErr) throw new Error(`word_sentences delete: ${delErr.message}`);
+  }
   for (let i = 0; i < linkRows.length; i += 1000) {
     const { error } = await db.from('word_sentences').insert(linkRows.slice(i, i + 1000));
     if (error) throw new Error(`word_sentences: ${error.message}`);
