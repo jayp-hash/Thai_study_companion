@@ -15,8 +15,7 @@ export function tourSteps({ session }) {
     { target: 'slow', side: 'back', title: 'Too fast?', text: 'The turtle plays the sentence slowly.' },
     { target: 'rate', side: 'back', title: 'Be honest', text: '"Got it" means you\'ll see the card less often, with less help. "Still learning" brings it back sooner.' },
     ...(session ? [] : [{ target: 'arrows', side: 'front', title: 'Move around', text: 'Swipe, or use the arrows and arrow keys, to go between cards.' }]),
-    { target: 'settings', title: 'Your settings', text: 'Change the voice, or how much romanization and English you see.' },
-    { target: 'help', title: "That's it!", text: 'Tap ? any time to see this tour again.' },
+    { target: 'settings', title: "That's it!", text: 'Aa changes the voice and how much romanization and English you see. You can replay this tour from there too.' },
   ];
 }
 
@@ -24,27 +23,43 @@ const PAD = 8;
 
 export default function Tour({ steps, onClose, setSide }) {
   const [i, setI] = useState(0);
-  const [rect, setRect] = useState(null);
+  const [rect, setRect] = useState(null);   // where the spotlight is
+  const [shown, setShown] = useState(false); // bubble fades out while moving, in once placed
   const step = steps[i];
 
   const measure = useCallback(() => {
     const el = document.querySelector(`[data-tour="${step.target}"]`);
     const r = el?.getBoundingClientRect();
-    setRect(r && r.width > 0 ? { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 } : null);
-    return !!(r && r.width > 0);
+    if (!(r && r.width > 0)) return false;
+    setRect({ top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 });
+    return true;
   }, [step]);
 
   // Flip the card if needed, wait for the flip, then find the target.
   useLayoutEffect(() => {
-    setRect(null);
+    setShown(false); // hide the bubble while the card flips; the spotlight stays put
     if (step.side) setSide(step.side);
     const t = setTimeout(() => {
-      const el = document.querySelector(`[data-tour="${step.target}"]`);
-      el?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
-      if (!measure()) setI((n) => (n < steps.length - 1 ? n + 1 : n)); // nothing to show: skip ahead
-    }, step.side ? 560 : 60);
+      if (measure()) setShown(true);
+      else setI((n) => (n < steps.length - 1 ? n + 1 : n)); // nothing to show: skip ahead
+    }, step.side ? 560 : 80);
     return () => clearTimeout(t);
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Freeze the page behind the tour so nothing slides around under it
+  useEffect(() => {
+    const html = document.documentElement, body = document.body;
+    const before = [html.style.overflow, body.style.overflow, body.style.overscrollBehavior];
+    html.style.overflow = 'hidden'; body.style.overflow = 'hidden'; body.style.overscrollBehavior = 'none';
+    const block = (e) => e.preventDefault();
+    window.addEventListener('wheel', block, { passive: false });
+    window.addEventListener('touchmove', block, { passive: false });
+    return () => {
+      [html.style.overflow, body.style.overflow, body.style.overscrollBehavior] = before;
+      window.removeEventListener('wheel', block);
+      window.removeEventListener('touchmove', block);
+    };
+  }, []);
 
   useEffect(() => {
     const re = () => measure();
@@ -84,7 +99,7 @@ export default function Tour({ steps, onClose, setSide }) {
       {rect
         ? <div className="tour-spot" style={rect} />
         : <div className="tour-dim" />}
-      <div className="tour-bubble" style={bubble}>
+      <div className={`tour-bubble${shown && rect ? ' is-shown' : ''}`} style={bubble}>
         <div className="tour-dots" aria-label={`Step ${i + 1} of ${steps.length}`}>
           {steps.map((_, k) => <i key={k} className={k === i ? 'on' : k < i ? 'done' : ''} />)}
         </div>

@@ -551,13 +551,15 @@ export default function Deck({ words, session = false, onRated, onDone }) {
               <Segmented label="Romanization" options={ROMAN_OPTIONS} value={help.roman} onChange={(v) => { setHelp('roman', v); setRevealed(new Set()); }} />
               <Segmented label="English sentence" options={ENGLISH_OPTIONS} value={help.english} onChange={(v) => { setHelp('english', v); setRevealed(new Set()); }} />
               <p className="fc-panel-note">Auto gives less help on a card each time you mark it &ldquo;Got it&rdquo;.</p>
+              <button type="button" className="fc-panel-tour" onClick={() => { setPanelOpen(false); setTourOpen(true); }}>
+                Show the tour again
+              </button>
               <button type="button" className="fc-panel-reset" onClick={() => { resetProgress(); setRevealed(new Set()); }}>
                 Reset my progress
               </button>
             </div>
           )}
         </div>
-        <button type="button" className="fc-help" data-tour="help" aria-label="Show the tour" title="How it works" onClick={() => { setPanelOpen(false); setTourOpen(true); }}>?</button>
       </div>
 
       <div className="fc-stage" ref={stageRef} style={cardHeight ? { '--fc-h': `${cardHeight}px` } : undefined}>
