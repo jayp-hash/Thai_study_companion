@@ -574,16 +574,15 @@ body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
 
 /* Blurred until tapped: you can see something is there, tap to read it */
 .fc-blur {
-  border: 0; background: rgba(120, 130, 150, .10); font: inherit; color: inherit; text-align: inherit;
-  cursor: pointer; border-radius: 10px;
-  /* bigger tap target without shifting the layout */
+  border: 0; background: none; font: inherit; color: inherit; text-align: inherit;
+  cursor: pointer; border-radius: 8px;
+  /* invisible padding = bigger tap target without moving anything */
   padding: 8px 12px; margin: -8px -12px;
 }
-.fc-blur > span, .fc-blur-text { filter: blur(4px); user-select: none; opacity: .95; transition: filter .2s, opacity .2s; }
-.fc-blur:hover { background: rgba(120, 130, 150, .16); }
-.fc-blur:hover > span { filter: blur(2.5px); opacity: 1; }
-.fc-blur:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 3px; }
-.fc-english.fc-blur { display: block; width: calc(100% + 24px); padding: 12px; margin: -12px -12px; }
+.fc-blur > span, .fc-blur-text { filter: blur(4px); user-select: none; opacity: 1; transition: filter .2s; }
+.fc-blur:hover > span { filter: blur(2.5px); }
+.fc-blur:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 0; }
+.fc-english.fc-blur { display: block; width: calc(100% + 24px); padding: 14px 12px; margin: -14px -12px; }
 
 /* "Still learning" / "Got it" along the bottom of the back of the card */
 .fc-rate { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 16px; }
