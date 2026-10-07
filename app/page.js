@@ -1,8 +1,13 @@
-const SECTIONS = [
+import { supabasePublic } from './lib/supabase-public';
+
+// Re-check the word count at most once an hour.
+export const revalidate = 3600;
+
+const sectionsFor = (wordCount) => [
   {
     href: '/vocabulary',
     title: 'Vocabulary',
-    desc: 'All 896 course words as flashcards, most common first, with example sentences on the back. Tap to flip, press play to hear it.',
+    desc: `All ${wordCount} course words as flashcards, most useful first, with example sentences on the back. Tap to flip, press play to hear it.`,
     live: true,
   },
   {
@@ -25,7 +30,9 @@ const SECTIONS = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const { count } = await supabasePublic.from('vocabulary').select('id', { count: 'exact', head: true });
+  const SECTIONS = sectionsFor(count ? count.toLocaleString('en') : 'the');
   return (
     <main className="page">
       <p className="eyebrow">Learn Thai</p>

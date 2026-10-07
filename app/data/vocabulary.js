@@ -1,7 +1,7 @@
 // Starter vocabulary set for the visual prototype.
 //
 // Pulled directly from thai_curriculum_source_data.xlsx (Vocabulary tab —
-// 896 words, ranked by average frequency across 3 cross-referenced sources).
+// (older list) 896 words, ranked by average frequency across 3 cross-referenced sources).
 // This is a small hand-picked slice of the top ~60 most common words, not
 // the whole list — once Supabase's content_items table exists, this file
 // goes away and the Vocabulary page queries that table instead. Nothing
