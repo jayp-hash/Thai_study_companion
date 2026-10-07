@@ -1,4 +1,6 @@
 'use client';
+import { supabaseBrowser } from '../lib/supabase-browser';
+import { useUser } from '../lib/useUser';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
@@ -181,16 +183,69 @@ function useHelpSettings() {
 }
 
 // progress = { "ที่": { got: 3, seen: 1696500000000 }, ... }
+// Always kept in this browser. When signed in, it is also saved to the
+// account (word_progress table) so it follows you to other devices.
+// On sign-in the two are merged: for each word, the most recent wins.
+async function loadRemoteProgress(db) {
+  const all = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from('word_progress').select('thai, got, seen').range(from, from + 999);
+    if (error) throw error;
+    all.push(...data);
+    if (data.length < 1000) break;
+  }
+  return Object.fromEntries(all.map((r) => [r.thai, { got: r.got, seen: new Date(r.seen).getTime() }]));
+}
+const toRow = (userId, thai, v) => ({ user_id: userId, thai, got: v.got, seen: new Date(v.seen || Date.now()).toISOString() });
+
 function useProgress() {
   const [progress, setProgress] = useState({});
+  const { user } = useUser();
+  const userId = user?.id;
   useEffect(() => { setProgress(readStore(PROGRESS_KEY, {})); }, []);
+
+  // Signed in: merge this browser's progress with the account's.
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const db = supabaseBrowser();
+      try {
+        const remote = await loadRemoteProgress(db);
+        const local = readStore(PROGRESS_KEY, {});
+        const merged = { ...remote };
+        const upload = [];
+        for (const [thai, v] of Object.entries(local)) {
+          if (!remote[thai] || (v.seen || 0) > (remote[thai].seen || 0)) { merged[thai] = v; upload.push(toRow(userId, thai, v)); }
+        }
+        for (let i = 0; i < upload.length; i += 500) {
+          const { error } = await db.from('word_progress').upsert(upload.slice(i, i + 500));
+          if (error) throw error;
+        }
+        if (!cancelled) { writeStore(PROGRESS_KEY, merged); setProgress(merged); }
+      } catch (e) {
+        console.warn('Could not sync progress', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+
   const rate = (thai, knewIt) => setProgress((p) => {
     const got = knewIt ? (p[thai]?.got || 0) + 1 : 0; // "Still learning" = full help again
-    const next = { ...p, [thai]: { got, seen: Date.now() } };
+    const entry = { got, seen: Date.now() };
+    const next = { ...p, [thai]: entry };
     writeStore(PROGRESS_KEY, next);
+    if (userId) {
+      supabaseBrowser().from('word_progress').upsert(toRow(userId, thai, entry))
+        .then(({ error }) => { if (error) console.warn('Could not save progress', error); });
+    }
     return next;
   });
-  const reset = () => { writeStore(PROGRESS_KEY, {}); setProgress({}); };
+  const reset = () => {
+    writeStore(PROGRESS_KEY, {}); setProgress({});
+    if (userId) supabaseBrowser().from('word_progress').delete().eq('user_id', userId)
+      .then(({ error }) => { if (error) console.warn('Could not reset progress', error); });
+  };
   return [progress, rate, reset];
 }
 
@@ -543,7 +598,7 @@ export default function Deck({ words }) {
               <Segmented label="English sentence" options={ENGLISH_OPTIONS} value={help.english} onChange={(v) => { setHelp('english', v); setRevealed(new Set()); }} />
               <p className="fc-panel-note">Auto gives less help on a card each time you mark it &ldquo;Got it&rdquo;.</p>
               <button type="button" className="fc-panel-reset" onClick={() => { resetProgress(); setRevealed(new Set()); }}>
-                Reset my progress on this device
+                Reset my progress
               </button>
             </div>
           )}
