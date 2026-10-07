@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
 import Deck from '../vocabulary/Deck';
-import { useProgressStore, coverage, endOfToday, GOAL_OPTIONS } from '../lib/progress';
+import { useProgressStore, coverage, endOfToday, dayKey, GOAL_OPTIONS } from '../lib/progress';
 import { useUser } from '../lib/useUser';
 
 const MAX_REVIEWS = 100;   // never more than this many reviews in one day
@@ -10,13 +10,36 @@ const MAX_REPEATS = 2;     // "Still learning" brings a card back at most twice 
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 
-function Flame() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-      <path fill="#F08A1C" d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-6 1-9.5z" />
-    </svg>
-  );
+// Streak shown with Thailand's colours of the day (Sunday red, Monday
+// yellow, Tuesday pink, Wednesday green, Thursday orange, Friday blue,
+// Saturday purple). A finished day fills with its colour.
+const THAI_DAY = [
+  { en: 'Sun', th: 'อา', color: '#E5383B' },
+  { en: 'Mon', th: 'จ', color: '#F2C200' },
+  { en: 'Tue', th: 'อ', color: '#EC6AA8' },
+  { en: 'Wed', th: 'พ', color: '#2BA84A' },
+  { en: 'Thu', th: 'พฤ', color: '#F28C28' },
+  { en: 'Fri', th: 'ศ', color: '#3A8DDE' },
+  { en: 'Sat', th: 'ส', color: '#8E5CC9' },
+];
+
+function Week({ days }) {
+  const cells = [];
+  for (let back = 6; back >= 0; back--) {
+    const t = Date.now() - back * 864e5;
+    const d = THAI_DAY[new Date(t).getDay()];
+    const done = !!days[dayKey(t)]?.done;
+    cells.push(
+      <li key={back} className={`${done ? 'done' : ''}${back === 0 ? ' today' : ''}`} style={{ '--day': d.color }} title={`${d.en}${done ? ': done' : ''}`}>
+        <span className="dot" lang="th">{d.th}</span>
+        <span className="lbl">{back === 0 ? 'Today' : d.en}</span>
+      </li>
+    );
+  }
+  return <ol className="today-week" aria-label="This week">{cells}</ol>;
 }
+
+const todayColour = () => THAI_DAY[new Date().getDay()].color;
 
 function Meter({ value, from }) {
   return (
@@ -36,7 +59,7 @@ function Meter({ value, from }) {
 
 export default function Today({ words }) {
   const store = useProgressStore();
-  const { progress, goal, setGoal, streak, newToday, loaded, finishToday } = store;
+  const { progress, goal, setGoal, streak, newToday, loaded, finishToday, days } = store;
   const { user, ready } = useUser();
   const [mode, setMode] = useState('home'); // home | session | done
   const [queue, setQueue] = useState([]);
@@ -105,8 +128,9 @@ export default function Today({ words }) {
           <h1 className="today-title">Nice work!</h1>
           <div className="today-stats">
             <div><b>{reviewedInSession.current}</b><span>cards studied</span></div>
-            <div><b className="flame"><Flame />{streak}</b><span>day streak</span></div>
+            <div><b>{streak}</b><span>day{streak === 1 ? '' : 's'} in a row</span></div>
           </div>
+          <Week days={days} />
           <Meter value={known} from={before} />
           <div className="today-actions">
             {plan.fresh.length > 0 && (
@@ -119,10 +143,11 @@ export default function Today({ words }) {
         <div className="today-card">
           <div className="today-head">
             <h1 className="today-title">Today</h1>
-            <span className="today-streak" title="Days in a row you finished your review"><Flame />{streak} day{streak === 1 ? '' : 's'}</span>
+            <span className="today-streak" title="Days in a row you finished your review"><i style={{ background: todayColour() }} />{streak} day{streak === 1 ? '' : 's'} in a row</span>
           </div>
 
           <Meter value={known} />
+          <Week days={days} />
 
           {nothingLeft ? (
             <div className="today-due">

@@ -699,3 +699,36 @@ body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
 .today-actions { display: grid; gap: 10px; }
 .today-quit { margin-left: auto; border: 0; background: none; font: 700 14px/1 var(--font-body), sans-serif; color: #6b7385; cursor: pointer; text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .today-bar i { transition: none; } }
+
+/* ---------- First-time tutorial ---------- */
+.tour { position: fixed; inset: 0; z-index: 100; }
+.tour-dim { position: absolute; inset: 0; background: rgba(15, 22, 40, .62); }
+.tour-spot { position: fixed; border-radius: 18px; box-shadow: 0 0 0 9999px rgba(15, 22, 40, .62); outline: 3px dashed #FFC83D; outline-offset: 2px; transition: top .25s, left .25s, width .25s, height .25s; pointer-events: none; }
+.tour-bubble { position: fixed; background: #1B2A4A; color: #fff; border-radius: 18px; padding: 18px 18px 14px; box-shadow: 0 12px 32px rgba(0,0,0,.3); display: grid; gap: 8px; font-family: var(--font-body), system-ui, sans-serif; }
+.tour-bubble h2 { font: 800 21px/1.15 var(--font-display), sans-serif; margin: 0; }
+.tour-bubble p { margin: 0; color: #DDE3F0; font-size: 15px; line-height: 1.45; }
+.tour-dots { display: flex; gap: 5px; }
+.tour-dots i { width: 7px; height: 7px; border-radius: 50%; background: #3F4F73; }
+.tour-dots i.done { background: #8C9ABA; }
+.tour-dots i.on { background: #FFC83D; width: 18px; border-radius: 4px; }
+.tour-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.tour-spacer { flex: 1; }
+.tour-skip, .tour-back { border: 0; background: none; color: #B9C3D9; font: 700 14px/1 var(--font-body), sans-serif; cursor: pointer; padding: 8px 4px; }
+.tour-skip:hover, .tour-back:hover { color: #fff; }
+.tour-next { border: 0; background: #FFC83D; color: #1B2A4A; font: 800 15px/1 var(--font-body), sans-serif; border-radius: 12px; padding: 11px 16px; cursor: pointer; box-shadow: 0 3px 0 #C99A12; }
+.tour-next:active { transform: translateY(2px); box-shadow: 0 1px 0 #C99A12; }
+.tour button:focus-visible { outline: 3px solid #FFC83D; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .tour-spot { transition: none; } }
+
+/* The yellow ? that replays the tour */
+.fc-help { width: 40px; height: 40px; border-radius: 12px; border: 0; background: #FFC83D; color: #1B2A4A; font: 800 19px/1 var(--font-display), sans-serif; cursor: pointer; box-shadow: 0 4px 0 #C99A12; flex: none; }
+.fc-help:active { transform: translateY(3px); box-shadow: 0 1px 0 #C99A12; }
+.today-streak i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.today-streak { background: #f3f5f8; color: #1f2533; }
+.today-week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.today-week li { display: grid; justify-items: center; gap: 6px; }
+.today-week .dot { width: 40px; height: 40px; max-width: 100%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 700 15px/1 var(--font-thai), sans-serif; color: #9aa3b5; background: #fff; border: 2px dashed #d3d9e3; }
+.today-week li.done .dot { background: var(--day); border: 2px solid var(--day); color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,.15); }
+.today-week li.today .dot { border-style: solid; border-color: var(--day); color: var(--day); }
+.today-week li.today.done .dot { color: #fff; }
+.today-week .lbl { font: 700 12px/1 var(--font-body), sans-serif; color: #6b7385; }

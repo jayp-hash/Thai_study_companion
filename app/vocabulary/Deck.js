@@ -1,5 +1,6 @@
 'use client';
 import { useProgressStore, readStore, writeStore } from '../lib/progress';
+import Tour, { tourSteps, TOUR_KEY } from './Tour';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
@@ -89,7 +90,7 @@ const StopIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true"><rect fill="currentColor" x="5.5" y="5.5" width="13" height="13" rx="2.5" /></svg>
 );
 
-function PlayButton({ id, label, small, player, onPlay }) {
+function PlayButton({ id, label, small, player, onPlay, tour }) {
   const isPlaying = player.playing === id;
   const isLoading = player.loading === id;
   return (
@@ -97,6 +98,7 @@ function PlayButton({ id, label, small, player, onPlay }) {
       type="button"
       className={`fc-play${small ? ' sm' : ''}${isPlaying ? ' is-playing' : ''}`}
       aria-label={isPlaying ? 'Stop' : label}
+      data-tour={tour}
       onClick={(e) => { e.stopPropagation(); onPlay(); }}
     >
       {isLoading ? <span className="fc-dots" aria-hidden="true">…</span> : isPlaying ? <StopIcon /> : <PlayIcon />}
@@ -252,6 +254,16 @@ export default function Deck({ words, session = false, onRated, onDone }) {
     return next;
   });
   currentVoice = help.voice || 'female';
+
+  // First-time tutorial (replay with the yellow ? button)
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourOpenRef = useRef(false);
+  tourOpenRef.current = tourOpen;
+  useEffect(() => {
+    if (readStore(TOUR_KEY, false)) return;
+    const t = setTimeout(() => setTourOpen(true), 700); // let the card size itself first
+    return () => clearTimeout(t);
+  }, []);
   const panelRef = useRef(null);
 
   // Close the settings panel when tapping anywhere else
@@ -405,10 +417,15 @@ export default function Deck({ words, session = false, onRated, onDone }) {
     setFlipped(false);
   }
 
-  const next = () => (isLastCard && hasNextSet ? chooseSet(setIndex + 1) : go(1));
+  // In the daily session you move on by rating the card, so "next" only flips it.
+  const next = () => {
+    if (session) { if (!flipped) flip(true); return; }
+    return isLastCard && hasNextSet ? chooseSet(setIndex + 1) : go(1);
+  };
   // Back from the first card of a set goes to the last card of the set before
   const isFirstCard = cardIndex === 0;
   const prev = () => {
+    if (session) return; // no going back once a card is rated
     if (isFirstCard && setIndex > 0) {
       stop();
       setSetIndex(setIndex - 1);
@@ -444,6 +461,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
     // focused, where space presses that button as usual.
     function onKey(e) {
       const tag = e.target.tagName;
+      if (tourOpenRef.current) return; // the tour handles its own keys
       if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') return;
       const move = (fn) => { e.preventDefault(); if (tag === 'BUTTON') e.target.blur(); fn(); };
       if (e.key === 'ArrowRight') move(() => nextRef.current());
@@ -518,6 +536,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
         <div className="fc-aa-wrap" ref={panelRef}>
           <button
             type="button"
+            data-tour="settings"
             className={`fc-aa${panelOpen ? ' is-on' : ''}`}
             aria-expanded={panelOpen}
             aria-label="Help settings: romanization and English"
@@ -538,13 +557,14 @@ export default function Deck({ words, session = false, onRated, onDone }) {
             </div>
           )}
         </div>
+        <button type="button" className="fc-help" data-tour="help" aria-label="Show the tour" title="How it works" onClick={() => { setPanelOpen(false); setTourOpen(true); }}>?</button>
       </div>
 
       <div className="fc-stage" ref={stageRef} style={cardHeight ? { '--fc-h': `${cardHeight}px` } : undefined}>
-        <button type="button" className="fc-arrow prev" onClick={prev} disabled={isFirstCard && setIndex === 0} aria-label={isFirstCard && setIndex > 0 ? 'Previous set' : 'Previous card'}>
+        <button type="button" className="fc-arrow prev" style={session ? { visibility: 'hidden' } : undefined} onClick={prev} disabled={isFirstCard && setIndex === 0} aria-label={isFirstCard && setIndex > 0 ? 'Previous set' : 'Previous card'}>
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
         </button>
-      <div className="fc-zone">
+      <div className="fc-zone" data-tour="card">
         <div
           className={`fc-card${flipped ? ' is-flipped' : ''}`}
           style={catStyle}
@@ -564,7 +584,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
               <div className="fc-big-roman">
                 <Roman text={word.romanization} mode={romanMode} revealed={isRevealed('front')} onReveal={() => reveal('front')} />
               </div>
-              <PlayButton id="word" label={`Play ${word.thai}`} player={player} onPlay={() => player.play('word', word.thai, rate)} />
+              <PlayButton id="word" tour="play" label={`Play ${word.thai}`} player={player} onPlay={() => player.play('word', word.thai, rate)} />
             </div>
           </section>
 
@@ -579,6 +599,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
                   <PlayButton id="sentence" label="Play sentence" small player={player} onPlay={() => player.play('sentence', sentence.thai, 1)} />
                   <button
                     type="button"
+                    data-tour="slow"
                     className={`fc-turtle${player.playing === 'sentence-slow' ? ' is-playing' : ''}`}
                     aria-label={player.playing === 'sentence-slow' ? 'Stop' : 'Play sentence slowly'}
                     title="Play slowly"
@@ -605,7 +626,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
 
               {sentence ? (
                 <>
-                  <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th">
+                  <div className={`fc-sentence${(sentence.words || []).length > 6 ? ' is-long' : ''}`} lang="th" data-tour="words">
                     {(sentence.words || [{ th: sentence.thai, rom: sentence.romanization }]).map((w, k) => {
                       const id = `box-${k}`;
                       const isTarget = w.th === word.thai;
@@ -658,7 +679,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
                 <p className="fc-soon">Example sentence coming soon</p>
               )}
             </div>
-            <div className="fc-rate">
+            <div className="fc-rate" data-tour="rate">
               <button type="button" className="fc-rate-btn again" onClick={(e) => { e.stopPropagation(); rateCard(false); }}>
                 Still learning
               </button>
@@ -673,13 +694,21 @@ export default function Deck({ words, session = false, onRated, onDone }) {
         <button
           type="button"
           className="fc-arrow next"
+          data-tour="arrows"
           onClick={next}
-          disabled={isLastCard && !hasNextSet}
-          aria-label={isLastCard && hasNextSet ? 'Next set' : 'Next card'}
+          disabled={session ? flipped : isLastCard && !hasNextSet}
+          aria-label={session ? 'Show the answer' : isLastCard && hasNextSet ? 'Next set' : 'Next card'}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
+      {tourOpen && (
+        <Tour
+          steps={tourSteps({ session })}
+          setSide={(side) => { stop(); setFlipped(side === 'back'); }}
+          onClose={() => { writeStore(TOUR_KEY, true); setTourOpen(false); setFlipped(false); }}
+        />
+      )}
     </div>
   );
 }
