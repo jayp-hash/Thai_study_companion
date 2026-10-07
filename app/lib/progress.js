@@ -140,7 +140,10 @@ export function ProgressProvider({ children }) {
         const dayUpload = Object.entries(mergedDays).map(([day, v]) => ({ user_id: userId, day, reviewed: v.reviewed || 0, done: !!v.done }));
         if (dayUpload.length) await db.from('study_days').upsert(dayUpload);
 
-        const { data: profile } = await db.from('profiles').select('new_per_day').eq('id', userId).maybeSingle();
+        const { data: profile } = await db.from('profiles').select('new_per_day, persona').eq('id', userId).maybeSingle();
+        // Remember who they are (chosen on the home page) for tailoring the course later
+        const persona = readStore('tsc-persona', null) ?? (() => { try { return localStorage.getItem('tsc-persona'); } catch { return null; } })();
+        if (profile && !profile.persona && persona) await db.from('profiles').update({ persona }).eq('id', userId);
 
         if (!cancelled) {
           writeStore(PROGRESS_KEY, merged); setProgress(merged);

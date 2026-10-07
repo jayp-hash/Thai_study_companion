@@ -48,3 +48,16 @@ export async function loadWords() {
   }));
 }
 
+
+// "Everyday Thai you understand" after learning the first N course words.
+// Same estimate as the Today screen (Zipf: share ≈ sum of 1/rank).
+export function coverageCurve(words, points) {
+  let H = 0; for (let r = 1; r <= 10000; r++) H += 1 / r;
+  let sum = 0;
+  const out = {};
+  words.forEach((w, i) => {
+    sum += 1 / (w.frequencyRank > 0 ? w.frequencyRank : 2000 + w.position);
+    if (points.includes(i + 1)) out[i + 1] = Math.round((sum / H) * 100);
+  });
+  return out;
+}
