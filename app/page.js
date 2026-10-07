@@ -5,6 +5,12 @@ export const revalidate = 3600;
 
 const sectionsFor = (wordCount) => [
   {
+    href: '/today',
+    title: 'Today',
+    desc: 'Your daily review: the words due today plus a few new ones. Keep your streak going and watch your everyday Thai grow.',
+    live: true,
+  },
+  {
     href: '/vocabulary',
     title: 'Vocabulary',
     desc: `All ${wordCount} course words as flashcards, most useful first, with example sentences on the back. Tap to flip, press play to hear it.`,

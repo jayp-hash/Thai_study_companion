@@ -1,6 +1,5 @@
 'use client';
-import { supabaseBrowser } from '../lib/supabase-browser';
-import { useUser } from '../lib/useUser';
+import { useProgressStore, readStore, writeStore } from '../lib/progress';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
@@ -144,7 +143,6 @@ function shuffle(list) {
 // "Auto" follows these levels; the learner can override either one.
 // Saved on this device for now; with accounts it will follow the learner.
 const SETTINGS_KEY = 'tsc-help';
-const PROGRESS_KEY = 'tsc-progress';
 const ROMAN_OPTIONS = [
   { id: 'auto', label: 'Auto' },
   { id: 'show', label: 'Show' },
@@ -161,13 +159,6 @@ const ENGLISH_OPTIONS = [
   { id: 'tap', label: 'Blur' },
 ];
 
-const readStore = (key, fallback) => {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
-};
-const writeStore = (key, value) => {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
-};
-
 function useHelpSettings() {
   const [settings, setSettings] = useState({ roman: 'auto', english: 'auto', voice: 'female' });
   useEffect(() => {
@@ -180,73 +171,6 @@ function useHelpSettings() {
     return next;
   });
   return [settings, change];
-}
-
-// progress = { "ที่": { got: 3, seen: 1696500000000 }, ... }
-// Always kept in this browser. When signed in, it is also saved to the
-// account (word_progress table) so it follows you to other devices.
-// On sign-in the two are merged: for each word, the most recent wins.
-async function loadRemoteProgress(db) {
-  const all = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await db.from('word_progress').select('thai, got, seen').range(from, from + 999);
-    if (error) throw error;
-    all.push(...data);
-    if (data.length < 1000) break;
-  }
-  return Object.fromEntries(all.map((r) => [r.thai, { got: r.got, seen: new Date(r.seen).getTime() }]));
-}
-const toRow = (userId, thai, v) => ({ user_id: userId, thai, got: v.got, seen: new Date(v.seen || Date.now()).toISOString() });
-
-function useProgress() {
-  const [progress, setProgress] = useState({});
-  const { user } = useUser();
-  const userId = user?.id;
-  useEffect(() => { setProgress(readStore(PROGRESS_KEY, {})); }, []);
-
-  // Signed in: merge this browser's progress with the account's.
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    (async () => {
-      const db = supabaseBrowser();
-      try {
-        const remote = await loadRemoteProgress(db);
-        const local = readStore(PROGRESS_KEY, {});
-        const merged = { ...remote };
-        const upload = [];
-        for (const [thai, v] of Object.entries(local)) {
-          if (!remote[thai] || (v.seen || 0) > (remote[thai].seen || 0)) { merged[thai] = v; upload.push(toRow(userId, thai, v)); }
-        }
-        for (let i = 0; i < upload.length; i += 500) {
-          const { error } = await db.from('word_progress').upsert(upload.slice(i, i + 500));
-          if (error) throw error;
-        }
-        if (!cancelled) { writeStore(PROGRESS_KEY, merged); setProgress(merged); }
-      } catch (e) {
-        console.warn('Could not sync progress', e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [userId]);
-
-  const rate = (thai, knewIt) => setProgress((p) => {
-    const got = knewIt ? (p[thai]?.got || 0) + 1 : 0; // "Still learning" = full help again
-    const entry = { got, seen: Date.now() };
-    const next = { ...p, [thai]: entry };
-    writeStore(PROGRESS_KEY, next);
-    if (userId) {
-      supabaseBrowser().from('word_progress').upsert(toRow(userId, thai, entry))
-        .then(({ error }) => { if (error) console.warn('Could not save progress', error); });
-    }
-    return next;
-  });
-  const reset = () => {
-    writeStore(PROGRESS_KEY, {}); setProgress({});
-    if (userId) supabaseBrowser().from('word_progress').delete().eq('user_id', userId)
-      .then(({ error }) => { if (error) console.warn('Could not reset progress', error); });
-  };
-  return [progress, rate, reset];
 }
 
 // One-time tips: shown on these cards until closed, then never again
@@ -306,15 +230,19 @@ function hexToRgba(hex, alpha) {
 }
 
 // ---------- The deck ----------
-export default function Deck({ words }) {
-  const setCount = Math.ceil(words.length / SET_SIZE);
+// session = the daily review: one list of cards, no sets or shuffle.
+//   onRated(word, knewIt) -> return true if the word was put back in the queue
+//   onDone() is called after rating the last card.
+export default function Deck({ words, session = false, onRated, onDone }) {
+  const size = session ? Math.max(words.length, 1) : SET_SIZE;
+  const setCount = Math.ceil(words.length / size);
   const [setIndex, setSetIndex] = useState(0);
   const [order, setOrder] = useState(null); // null = normal order; array = shuffled
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const player = usePlayer();
   const [help, setHelp] = useHelpSettings();
-  const [progress, rateWord, resetProgress] = useProgress();
+  const { progress, rate: rateWord, reset: resetProgress } = useProgressStore();
   const [panelOpen, setPanelOpen] = useState(false);
   const [tipsSeen, setTipsSeen] = useState(() => new Set());
   useEffect(() => { setTipsSeen(new Set(readStore(TIPS_KEY, []))); }, []);
@@ -404,7 +332,7 @@ export default function Deck({ words }) {
   const goRef = useRef(() => {});
 
   // New card: hide bubbles and re-hide romanization
-  const position = (order || words.slice(setIndex * SET_SIZE, setIndex * SET_SIZE + SET_SIZE))[cardIndex]?.position;
+  const position = (order || words.slice(setIndex * size, setIndex * size + size))[cardIndex]?.position;
   useEffect(() => {
     setRevealed(new Set());
     setPeek(-1);
@@ -441,7 +369,7 @@ export default function Deck({ words }) {
   }, []);
 
   const setWords = useMemo(
-    () => words.slice(setIndex * SET_SIZE, setIndex * SET_SIZE + SET_SIZE),
+    () => words.slice(setIndex * size, setIndex * size + size),
     [words, setIndex]
   );
   const cards = order || setWords;
@@ -485,7 +413,7 @@ export default function Deck({ words }) {
       stop();
       setSetIndex(setIndex - 1);
       setOrder(null);
-      setCardIndex(SET_SIZE - 1);
+      setCardIndex(size - 1);
       setFlipped(false);
     } else {
       go(-1);
@@ -495,7 +423,14 @@ export default function Deck({ words }) {
   goRef.current = (step) => (step < 0 ? prev() : go(step));
 
   // "Still learning" / "Got it": record it for this word, then go to the next card
-  const rateCard = (knewIt) => { if (word) { rateWord(word.thai, knewIt); next(); } };
+  const rateCard = (knewIt) => {
+    if (!word) return;
+    rateWord(word.thai, knewIt);
+    if (!session) { next(); return; }
+    const requeued = onRated?.(word, knewIt);
+    if (isLastCard && !requeued) { stop(); onDone?.(); return; }
+    stop(); setFlipped(false); setCardIndex((i) => i + 1); // a re-queued card is appended, so i + 1 exists
+  };
   const rateRef = useRef(rateCard);
   rateRef.current = rateCard;
   const flippedRef = useRef(flipped);
@@ -554,21 +489,21 @@ export default function Deck({ words }) {
   return (
     <div className="fc">
       <div className="fc-toolbar">
-        <label className="fc-set">
+        {!session && <label className="fc-set">
           <span className="sr-only">Set</span>
           <select value={setIndex} onChange={(e) => chooseSet(Number(e.target.value))}>
             {Array.from({ length: setCount }, (_, i) => (
               <option key={i} value={i}>
-                Set {i + 1} · words {i * SET_SIZE + 1}–{Math.min((i + 1) * SET_SIZE, words.length)}
+                Set {i + 1} · words {i * size + 1}–{Math.min((i + 1) * size, words.length)}
               </option>
             ))}
           </select>
-        </label>
+        </label>}
         <div className="fc-progress" aria-hidden="true">
           <span style={{ width: `${((cardIndex + 1) / cards.length) * 100}%` }} />
         </div>
         <span className="fc-count">{cardIndex + 1} / {cards.length}</span>
-        <button
+        {!session && <button
           type="button"
           className={`fc-shuffle${order ? ' is-on' : ''}`}
           onClick={toggleShuffle}
@@ -579,7 +514,7 @@ export default function Deck({ words }) {
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
           </svg>
-        </button>
+        </button>}
         <div className="fc-aa-wrap" ref={panelRef}>
           <button
             type="button"

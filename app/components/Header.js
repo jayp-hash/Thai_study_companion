@@ -6,6 +6,7 @@ import { supabaseBrowser } from '../lib/supabase-browser';
 
 const LINKS = [
   { href: '/', label: 'Home' },
+  { href: '/today', label: 'Today' },
   { href: '/vocabulary', label: 'Vocabulary' },
 ];
 

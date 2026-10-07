@@ -668,3 +668,34 @@ body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
 .prose { max-width: 680px; }
 .prose h2 { font: 800 22px/1.2 var(--font-display), sans-serif; margin: 28px 0 8px; }
 .prose p, .prose li { color: var(--color-text); line-height: 1.6; }
+
+/* ---------- Today: daily review, streak, everyday-Thai meter ---------- */
+.today-wrap {
+  --fc-surface: #ffffff; --fc-text: #1f2533; --fc-muted: #6b7385; --fc-line: #e1e5ec; --fc-primary: #22a564;
+  --fc-body: var(--font-body), system-ui, sans-serif;
+  display: grid; justify-items: center;
+}
+.today-card { width: min(100%, 560px); background: #fff; border: 2px solid #e1e5ec; border-radius: 24px; box-shadow: 0 6px 0 #d3d9e3; padding: 26px 24px; display: grid; gap: 22px; }
+.today-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.today-title { font: 800 34px/1.1 var(--font-display), sans-serif; margin: 0; }
+.today-eyebrow { font: 800 12px/1 var(--font-body), sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #17804b; margin: 0 0 -14px; }
+.today-streak { display: inline-flex; align-items: center; gap: 6px; font: 800 17px/1 var(--font-body), sans-serif; background: #fff4e6; color: #9a4f05; padding: 8px 12px; border-radius: 999px; }
+.today-meter-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 700; }
+.today-meter-top b { font: 800 38px/1 var(--font-display), sans-serif; color: #22a564; font-variant-numeric: tabular-nums; }
+.today-bar { position: relative; height: 18px; border-radius: 999px; background: #eef1f6; overflow: hidden; margin-top: 10px; }
+.today-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: #22a564; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+.today-bar i.was { background: #8fd9b2; }
+.today-note { font-size: 13px; color: #6b7385; margin: 8px 0 0; }
+.today-note a { text-decoration: underline; color: #17804b; font-weight: 700; }
+.today-due { display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #e3f5ec; border-radius: 18px; padding: 16px 18px; flex-wrap: wrap; }
+.today-due strong { font: 800 19px/1.2 var(--font-body), sans-serif; display: block; }
+.today-due span { font-size: 14px; color: #6b7385; }
+.today-due .auth-btn { width: auto; padding: 14px 26px; }
+.today-goal { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 700; font-size: 15px; }
+.today-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.today-stats div { background: #f3f5f8; border-radius: 16px; padding: 14px; display: grid; gap: 4px; }
+.today-stats b { font: 800 32px/1 var(--font-display), sans-serif; display: inline-flex; align-items: center; gap: 6px; }
+.today-stats span { font-size: 14px; color: #6b7385; }
+.today-actions { display: grid; gap: 10px; }
+.today-quit { margin-left: auto; border: 0; background: none; font: 700 14px/1 var(--font-body), sans-serif; color: #6b7385; cursor: pointer; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .today-bar i { transition: none; } }
