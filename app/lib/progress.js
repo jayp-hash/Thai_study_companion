@@ -21,7 +21,7 @@ export const PROGRESS_KEY = 'tsc-progress';
 const DAYS_KEY = 'tsc-days';
 const GOAL_KEY = 'tsc-goal';
 export const GOAL_OPTIONS = [5, 10, 15, 20, 30];
-export const DEFAULT_GOAL = 10;
+export const DEFAULT_GOAL = 5; // eager learners can raise it on the Today screen
 
 const DAY = 24 * 60 * 60 * 1000;
 // Spaced repetition: each "Got it" in a row waits longer before the word comes back.

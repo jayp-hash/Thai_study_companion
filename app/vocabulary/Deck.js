@@ -1,6 +1,6 @@
 'use client';
 import { useProgressStore, readStore, writeStore } from '../lib/progress';
-import Tour, { tourSteps, TOUR_KEY } from './Tour';
+import Tour, { tourSteps, TOUR_KEY, HINT_BACK_KEY } from './Tour';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const SET_SIZE = 20;
@@ -178,6 +178,7 @@ function useHelpSettings() {
 // One-time tips: shown on these cards until closed, then never again
 const TIPS_KEY = 'tsc-tips-seen';
 const TIPS = {
+  'สวัสดี': 'See the little marks in sà-wàt-dii? They show whether your voice goes up or down. Don\'t worry about them yet: just copy the audio.',
   'ครับ': 'Men end polite sentences with ครับ. Women use ค่ะ.',
   'ค่ะ': 'Women end polite sentences with ค่ะ (คะ in questions). Men use ครับ.',
   'ผม': 'ผม is "I" for men. Women usually say ฉัน.',
@@ -256,12 +257,18 @@ export default function Deck({ words, session = false, onRated, onDone }) {
   currentVoice = help.voice || 'female';
 
   // First-time tutorial (replay with the yellow ? button)
+  // false, or which tour: 'intro' (first visit), 'back' (first flip), 'full' (replay)
   const [tourOpen, setTourOpen] = useState(false);
   const tourOpenRef = useRef(false);
   tourOpenRef.current = tourOpen;
   useEffect(() => {
+    if (!flipped || tourOpen || !readStore(TOUR_KEY, false) || readStore(HINT_BACK_KEY, false)) return;
+    const t = setTimeout(() => setTourOpen('back'), 650); // after the flip animation
+    return () => clearTimeout(t);
+  }, [flipped, tourOpen]);
+  useEffect(() => {
     if (readStore(TOUR_KEY, false)) return;
-    const t = setTimeout(() => setTourOpen(true), 700); // let the card size itself first
+    const t = setTimeout(() => setTourOpen('intro'), 700); // let the card size itself first
     return () => clearTimeout(t);
   }, []);
   const panelRef = useRef(null);
@@ -551,7 +558,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
               <Segmented label="Romanization" options={ROMAN_OPTIONS} value={help.roman} onChange={(v) => { setHelp('roman', v); setRevealed(new Set()); }} />
               <Segmented label="English sentence" options={ENGLISH_OPTIONS} value={help.english} onChange={(v) => { setHelp('english', v); setRevealed(new Set()); }} />
               <p className="fc-panel-note">Auto gives less help on a card each time you mark it &ldquo;Got it&rdquo;.</p>
-              <button type="button" className="fc-panel-tour" onClick={() => { setPanelOpen(false); setTourOpen(true); }}>
+              <button type="button" className="fc-panel-tour" onClick={() => { setPanelOpen(false); setTourOpen('full'); }}>
                 Show the tour again
               </button>
               <button type="button" className="fc-panel-reset" onClick={() => { resetProgress(); setRevealed(new Set()); }}>
@@ -706,9 +713,15 @@ export default function Deck({ words, session = false, onRated, onDone }) {
       </div>
       {tourOpen && (
         <Tour
-          steps={tourSteps({ session })}
+          steps={tourSteps({ session, kind: tourOpen })}
           setSide={(side) => { stop(); setFlipped(side === 'back'); }}
-          onClose={() => { writeStore(TOUR_KEY, true); setTourOpen(false); setFlipped(false); }}
+          onClose={() => {
+            const kind = tourOpen;
+            writeStore(TOUR_KEY, true);
+            if (kind !== 'intro') writeStore(HINT_BACK_KEY, true); // the full tour covers the back too
+            setTourOpen(false);
+            if (kind !== 'back') setFlipped(false);
+          }}
         />
       )}
     </div>

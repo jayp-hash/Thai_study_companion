@@ -1,10 +1,12 @@
 'use client';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Deck from '../vocabulary/Deck';
 import { useProgressStore, coverage, endOfToday, dayKey, GOAL_OPTIONS } from '../lib/progress';
 import { useUser } from '../lib/useUser';
+import { sayItFor } from '../lib/sayit';
+import { readStore, writeStore, dayKey as todayKey } from '../lib/progress';
 
-const MAX_REVIEWS = 100;   // never more than this many reviews in one day
+const MAX_REVIEWS = 30;    // review cap per day; any backlog rolls over, so a session stays ~5-7 minutes
 const EXTRA_NEW = 5;       // "Learn 5 more"
 const MAX_REPEATS = 2;     // "Still learning" brings a card back at most twice per session
 
@@ -54,6 +56,52 @@ function Meter({ value, from }) {
       </div>
       <p className="today-note">An estimate, based on how often Thai people use each word you know.</p>
     </div>
+  );
+}
+
+// "Say it Today": one real-life line to use today, with an "I said it" tap.
+const SAID_KEY = 'tsc-said'; // { "2026-10-09": 12 (day number of the line), ... }
+function SayIt({ count }) {
+  const line = sayItFor(count);
+  const [said, setSaid] = useState({});
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => { setSaid(readStore(SAID_KEY, {})); }, []);
+  if (!line) return null;
+  const doneToday = said[todayKey()] != null;
+  const total = Object.keys(said).length;
+  const markSaid = () => {
+    const next = { ...said, [todayKey()]: line.day };
+    writeStore(SAID_KEY, next); setSaid(next);
+  };
+  const play = () => {
+    try {
+      const voice = readStore('tsc-help', {}).voice || 'female';
+      const a = new Audio(`/api/speak?text=${encodeURIComponent(line.thai)}&voice=${voice}&v=2`);
+      setPlaying(true);
+      a.onended = a.onerror = () => setPlaying(false);
+      a.play().catch(() => setPlaying(false));
+    } catch { setPlaying(false); }
+  };
+  return (
+    <section className="sayit" aria-label="Say it today">
+      <p className="sayit-eyebrow">Say it today</p>
+      <div className="sayit-line">
+        <button type="button" className={`sayit-play${playing ? ' on' : ''}`} onClick={play} aria-label={`Play ${line.thai}`}>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
+        </button>
+        <div className="sayit-text">
+          <span className="sayit-th" lang="th">{line.thai}</span>
+          <span className="sayit-rom">{line.rom}</span>
+          <span className="sayit-en">{line.en}</span>
+        </div>
+      </div>
+      <p className="sayit-where">{line.where}</p>
+      {doneToday ? (
+        <p className="sayit-done">Nice! You've used Thai in real life {total === 1 ? 'once' : `${total} times`}.</p>
+      ) : (
+        <button type="button" className="sayit-btn" onClick={markSaid}>I said it!</button>
+      )}
+    </section>
   );
 }
 
@@ -126,6 +174,7 @@ export default function Today({ words }) {
         <div className="today-card today-done">
           <p className="today-eyebrow">Session complete</p>
           <h1 className="today-title">Nice work!</h1>
+          <SayIt count={Object.keys(progress).length} />
           <div className="today-stats">
             <div><b>{reviewedInSession.current}</b><span>cards studied</span></div>
             <div><b>{streak}</b><span>day{streak === 1 ? '' : 's'} in a row</span></div>
@@ -146,6 +195,7 @@ export default function Today({ words }) {
             <span className="today-streak" title="Days in a row you finished your review"><i style={{ background: todayColour() }} />{streak} day{streak === 1 ? '' : 's'} in a row</span>
           </div>
 
+          <SayIt count={Object.keys(progress).length} />
           <Meter value={known} />
           <Week days={days} />
 

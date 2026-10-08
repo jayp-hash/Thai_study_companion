@@ -7,16 +7,24 @@ import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 // side: 'front' / 'back' flips the card first so the right part is visible.
 export const TOUR_KEY = 'tsc-tour-vocab';
 
-export function tourSteps({ session }) {
-  return [
-    { target: 'card', side: 'front', title: 'One word per card', text: 'Tap the card, or press Space, to flip it over.' },
-    { target: 'play', side: 'front', title: 'Hear it', text: 'Tap play to hear the word.' },
-    { target: 'words', side: 'back', title: 'See it in a sentence', text: 'The back uses the word in a short sentence. Tap any word to hear it and see what it means.' },
-    { target: 'slow', side: 'back', title: 'Too fast?', text: 'The turtle plays the sentence slowly.' },
-    { target: 'rate', side: 'back', title: 'Be honest', text: '"Got it" means you\'ll see the card less often, with less help. "Still learning" brings it back sooner.' },
-    ...(session ? [] : [{ target: 'arrows', side: 'front', title: 'Move around', text: 'Swipe, or use the arrows and arrow keys, to go between cards.' }]),
-    { target: 'settings', title: "That's it!", text: 'Aa changes the voice and how much romanization and English you see. You can replay this tour from there too.' },
-  ];
+export const HINT_BACK_KEY = 'tsc-hint-back';
+
+// kind: 'intro' = the 2-step first-time tour (flip, rate)
+//       'back'  = a just-in-time hint the first time the learner flips a card
+//       'full'  = everything (replayed from the Aa menu)
+export function tourSteps({ session, kind = 'full' }) {
+  const steps = {
+    card: { target: 'card', side: 'front', title: 'One word per card', text: 'Tap the card, or press Space, to flip it over.' },
+    play: { target: 'play', side: 'front', title: 'Hear it', text: 'Tap play to hear the word.' },
+    words: { target: 'words', side: 'back', title: 'See it in a sentence', text: 'Tap any word in the sentence to hear it and see what it means.' },
+    slow: { target: 'slow', side: 'back', title: 'Too fast?', text: 'The turtle plays the sentence slowly.' },
+    rate: { target: 'rate', side: 'back', title: 'Be honest', text: '"Got it" means you\'ll see it less often, with less help. "Still learning" brings it back sooner.' },
+    arrows: { target: 'arrows', side: 'front', title: 'Move around', text: 'Swipe, or use the arrows and arrow keys, to go between cards.' },
+    settings: { target: 'settings', title: "That's it!", text: 'Aa changes the voice and how much romanization and English you see. You can replay this tour from there too.' },
+  };
+  if (kind === 'intro') return [steps.card, { ...steps.rate, title: 'Then rate yourself' }];
+  if (kind === 'back') return [{ ...steps.words, title: 'Tip: tap the words' }, steps.slow];
+  return [steps.card, steps.play, steps.words, steps.slow, steps.rate, ...(session ? [] : [steps.arrows]), steps.settings];
 }
 
 const PAD = 8;

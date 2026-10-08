@@ -19,6 +19,7 @@
 // Voice is Amy for now. Once the ครับ/ค่ะ speech-style switch exists,
 // a `voice` param here will pick between Amy and Chris.
 
+import { SAY_IT } from '../../lib/sayit';
 import { supabasePublic } from '../../lib/supabase-public';
 
 const AMY_VOICE_ID = 'OZxMHsGaBmV5pjMIDIn0'; // female voice
@@ -38,7 +39,11 @@ async function getMaleVoiceId() {
 const MAX_CHARS = 200;
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
+// "Say it Today" lines live in the app code, not the database
+const SAY_IT_TEXT = new Set(SAY_IT.flatMap((l) => [l.thai, ...l.words]));
+
 async function isCourseText(text) {
+  if (SAY_IT_TEXT.has(text)) return true;
   const [word, sentence, box] = await Promise.all([
     supabasePublic.from('vocabulary').select('id').eq('thai', text).limit(1),
     supabasePublic.from('sentences').select('id').eq('thai', text).neq('review_status', 'rejected').limit(1),
