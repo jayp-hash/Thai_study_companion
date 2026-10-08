@@ -14,38 +14,67 @@ export const SAY_IT = [
  },
  {
   "day": 2,
-  "thai": "ไม่เป็นไร",
+  "thai": "ขอบคุณ",
   "words": [
-   "ไม่เป็นไร"
+   "ขอบคุณ"
   ],
-  "rom": "mâi-bpen-rai",
-  "en": "No problem.",
-  "where": "When someone apologises, bumps into you or says sorry for a wait."
+  "rom": "khàawp-khun",
+  "en": "Thank you.",
+  "where": "Thank the cashier, the driver or whoever holds the door."
  },
  {
   "day": 3,
-  "thai": "โอเคขอบคุณ",
+  "thai": "อร่อยมาก",
   "words": [
-   "โอเค",
-   "ขอบคุณ"
+   "อร่อยมาก"
   ],
-  "rom": "oo-khee khàawp-khun",
-  "en": "OK, thanks.",
-  "where": "When someone gives you directions or hands you your change."
+  "rom": "à-ràwi mâak",
+  "en": "Really delicious!",
+  "where": "Tell the vendor after you eat. Watch them smile."
  },
  {
   "day": 4,
-  "thai": "ไม่ต้องขอบคุณ",
+  "thai": "ไม่เผ็ด",
   "words": [
-   "ไม่ต้อง",
-   "ขอบคุณ"
+   "ไม่เผ็ด"
   ],
-  "rom": "mâi dtâwng khàawp-khun",
-  "en": "No need, thanks.",
-  "where": "When a shop assistant or street seller offers you something you don't want."
+  "rom": "mâi phèt",
+  "en": "Not spicy.",
+  "where": "Order your lunch."
  },
  {
   "day": 5,
+  "thai": "ไม่เอาถุง",
+  "words": [
+   "ไม่เอาถุง"
+  ],
+  "rom": "mâi ao thǔng",
+  "en": "No bag, thanks.",
+  "where": "At the 7-Eleven checkout."
+ },
+ {
+  "day": 6,
+  "thai": "แพ้อาหารทะเล",
+  "words": [
+   "แพ้อาหารทะเล"
+  ],
+  "rom": "pháae aa-hǎan-thá-lee",
+  "en": "I'm allergic to seafood.",
+  "where": "If it's true for you, say it before every order. If not, learn it for a friend who is."
+ },
+ {
+  "day": 7,
+  "thai": "ไม่เป็นไรขอบคุณ",
+  "words": [
+   "ไม่เป็นไร",
+   "ขอบคุณ"
+  ],
+  "rom": "mâi-bpen-rai khàawp-khun",
+  "en": "No, thanks.",
+  "where": "When a shop assistant or street seller offers you something you don't want."
+ },
+ {
+  "day": 8,
   "thai": "อันนี้",
   "words": [
    "อัน",
@@ -56,18 +85,7 @@ export const SAY_IT = [
   "where": "Point at what you want at a food stall."
  },
  {
-  "day": 6,
-  "thai": "อันนั้น",
-  "words": [
-   "อัน",
-   "นั้น"
-  ],
-  "rom": "an nán",
-  "en": "That one.",
-  "where": "Point at something further away at the market."
- },
- {
-  "day": 7,
+  "day": 9,
   "thai": "อันนี้เท่าไหร่",
   "words": [
    "อัน",
@@ -79,17 +97,27 @@ export const SAY_IT = [
   "where": "Ask at a market stall or street-food cart."
  },
  {
-  "day": 8,
-  "thai": "ไม่มี",
+  "day": 10,
+  "thai": "ไปตลาดไหม",
   "words": [
-   "ไม่มี"
+   "ไปตลาดไหม"
   ],
-  "rom": "mâi-mii",
-  "en": "I don't have any.",
-  "where": "When a motorbike taxi or vendor asks if you have small change."
+  "rom": "bpai dtà-làat mǎi",
+  "en": "To the market, will you go?",
+  "where": "Ask a motorbike taxi. Swap in your own place."
  },
  {
-  "day": 9,
+  "day": 11,
+  "thai": "กี่บาท",
+  "words": [
+   "กี่บาท"
+  ],
+  "rom": "gìi bàat",
+  "en": "How many baht?",
+  "where": "Ask the motorbike taxi before you get on."
+ },
+ {
+  "day": 12,
   "thai": "กินที่นี่",
   "words": [
    "กินที่นี่"
@@ -99,7 +127,7 @@ export const SAY_IT = [
   "where": "Tell the street-food vendor you're eating at the stall."
  },
  {
-  "day": 10,
+  "day": 13,
   "thai": "ขออันนี้",
   "words": [
    "ขอ",
@@ -111,38 +139,47 @@ export const SAY_IT = [
   "where": "Order by pointing at the food you want."
  },
  {
-  "day": 11,
-  "thai": "ไม่เอาถุง",
+  "day": 14,
+  "thai": "เอากลับบ้าน",
   "words": [
-   "ไม่เอาถุง"
+   "เอากลับบ้าน"
   ],
-  "rom": "mâi ao thǔng",
-  "en": "No bag, thanks.",
-  "where": "At the 7-Eleven checkout."
+  "rom": "ao glàp bâan",
+  "en": "To take away.",
+  "where": "Ordering food to take home."
  },
  {
-  "day": 12,
-  "thai": "ไม่เข้าใจพูดช้าๆ หน่อย",
+  "day": 15,
+  "thai": "ไม่เข้าใจ",
   "words": [
-   "ไม่เข้าใจ",
-   "พูดช้าๆ หน่อย"
+   "ไม่เข้าใจ"
   ],
-  "rom": "mâi khâo-jai phûut cháa-cháa nàawi",
-  "en": "I don't understand. Please speak slowly.",
+  "rom": "mâi khâo-jai",
+  "en": "I don't understand.",
   "where": "When someone replies to you in fast Thai."
  },
  {
-  "day": 13,
-  "thai": "ภาษาไทยเรียกว่าอะไร",
+  "day": 16,
+  "thai": "พูดช้าๆ หน่อย",
   "words": [
-   "ภาษาไทยเรียกว่าอะไร"
+   "พูดช้าๆ หน่อย"
   ],
-  "rom": "phaa-sǎa-thai rîiak-wâa à-rai",
-  "en": "What's it called in Thai?",
+  "rom": "phûut cháa-cháa nàawi",
+  "en": "Please speak slowly.",
+  "where": "Right after \"I don't understand\"."
+ },
+ {
+  "day": 17,
+  "thai": "อันนี้ภาษาไทยเรียกว่าอะไร",
+  "words": [
+   "อันนี้ภาษาไทยเรียกว่าอะไร"
+  ],
+  "rom": "an-níi phaa-sǎa-thai rîiak-wâa à-rai",
+  "en": "What is this called in Thai?",
   "where": "Point at something and ask a vendor or colleague."
  },
  {
-  "day": 14,
+  "day": 18,
   "thai": "เอาสองอัน",
   "words": [
    "เอา",
@@ -154,39 +191,37 @@ export const SAY_IT = [
   "where": "Ordering two drinks or two of anything."
  },
  {
-  "day": 15,
-  "thai": "ห้าสิบบาท",
+  "day": 19,
+  "thai": "ไม่ต้องทอน",
   "words": [
-   "ห้า",
-   "สิบ",
-   "บาท"
+   "ไม่ต้องทอน"
   ],
-  "rom": "hâa sìp bàat",
-  "en": "Fifty baht.",
-  "where": "Say the price back to the vendor to check you heard it right."
+  "rom": "mâi dtâwng thaawn",
+  "en": "Keep the change.",
+  "where": "Taxi or restaurant, when the change is small."
  },
  {
-  "day": 16,
-  "thai": "กี่บาท",
+  "day": 20,
+  "thai": "สแกนได้ไหม",
   "words": [
-   "กี่บาท"
+   "สแกนได้ไหม"
   ],
-  "rom": "gìi bàat",
-  "en": "How many baht?",
-  "where": "Ask the motorbike taxi before you get on."
+  "rom": "sà-gaaen dâai mǎi",
+  "en": "Can I pay by QR scan?",
+  "where": "Before paying at a stall or shop."
  },
  {
-  "day": 17,
-  "thai": "ไม่เผ็ด",
+  "day": 21,
+  "thai": "ไม่ใส่ผักชี",
   "words": [
-   "ไม่เผ็ด"
+   "ไม่ใส่ผักชี"
   ],
-  "rom": "mâi phèt",
-  "en": "Not spicy.",
-  "where": "Order your lunch."
+  "rom": "mâi sài phàk-chii",
+  "en": "No coriander.",
+  "where": "Ordering noodles, soup or salad (if you're not a fan)."
  },
  {
-  "day": 18,
+  "day": 22,
   "thai": "ร้อนมาก",
   "words": [
    "ร้อน",
@@ -197,17 +232,28 @@ export const SAY_IT = [
   "where": "Small talk with the security guard; Thais love talking about the heat."
  },
  {
-  "day": 19,
-  "thai": "อร่อยมาก",
+  "day": 23,
+  "thai": "ไม่ใส่ผงชูรส",
   "words": [
-   "อร่อยมาก"
+   "ไม่ใส่ผงชูรส"
   ],
-  "rom": "à-ràwi mâak",
-  "en": "Really delicious!",
-  "where": "Tell the vendor after you eat. Watch them smile."
+  "rom": "mâi sài phǒng-chuu-rót",
+  "en": "No MSG.",
+  "where": "At a street-food stall."
  },
  {
-  "day": 20,
+  "day": 24,
+  "thai": "แพงไปลดหน่อยได้ไหม",
+  "words": [
+   "แพงไป",
+   "ลดหน่อยได้ไหม"
+  ],
+  "rom": "phaaeng bpai lót nàawi dâai mǎi",
+  "en": "Too expensive. Can you give a little discount?",
+  "where": "Clothes or souvenir markets only, never at food stalls or 7-Eleven."
+ },
+ {
+  "day": 25,
   "thai": "ขอน้ำเปล่า",
   "words": [
    "ขอน้ำเปล่า"
@@ -217,7 +263,7 @@ export const SAY_IT = [
   "where": "At any restaurant."
  },
  {
-  "day": 21,
+  "day": 26,
   "thai": "หวานน้อย",
   "words": [
    "หวานน้อย"
@@ -227,66 +273,28 @@ export const SAY_IT = [
   "where": "Ordering coffee or tea from a street stall."
  },
  {
-  "day": 22,
+  "day": 27,
   "thai": "มีพัสดุไหม",
   "words": [
    "มีพัสดุไหม"
   ],
   "rom": "mii phát-sà-dù mǎi",
   "en": "Is there a parcel for me?",
-  "where": "Ask at your condo front desk."
+  "where": "At your condo front desk (add your room number)."
  },
  {
-  "day": 23,
-  "thai": "เอากลับบ้าน",
+  "day": 28,
+  "thai": "ชื่ออะไร",
   "words": [
-   "เอากลับบ้าน"
-  ],
-  "rom": "ao glàp bâan",
-  "en": "To take away.",
-  "where": "Ordering food to take home."
- },
- {
-  "day": 24,
-  "thai": "คุณชื่ออะไร",
-  "words": [
-   "คุณ",
    "ชื่อ",
    "อะไร"
   ],
-  "rom": "khun chûue à-rai",
+  "rom": "chûue à-rai",
   "en": "What's your name?",
   "where": "Ask the vendor you buy from every day."
  },
  {
-  "day": 25,
-  "thai": "อันนี้หรืออันนั้น",
-  "words": [
-   "อัน",
-   "นี้",
-   "หรือ",
-   "อัน",
-   "นั้น"
-  ],
-  "rom": "an níi rǔue an nán",
-  "en": "This one or that one?",
-  "where": "Ask a Thai friend to help you choose at the market."
- },
- {
-  "day": 26,
-  "thai": "ฉันจะไปตลาด",
-  "words": [
-   "ฉัน",
-   "จะ",
-   "ไป",
-   "ตลาด"
-  ],
-  "rom": "chǎn jà bpai dtà-làat",
-  "en": "I'm going to the market.",
-  "where": "Tell the security guard when you head out."
- },
- {
-  "day": 27,
+  "day": 29,
   "thai": "เก็บตังค์ด้วย",
   "words": [
    "เก็บตังค์ด้วย"
@@ -296,18 +304,20 @@ export const SAY_IT = [
   "where": "At the end of a meal."
  },
  {
-  "day": 28,
-  "thai": "หิวแล้ว",
+  "day": 30,
+  "thai": "กินข้าวหรือยัง",
   "words": [
-   "หิว",
-   "แล้ว"
+   "กิน",
+   "ข้าว",
+   "หรือ",
+   "ยัง"
   ],
-  "rom": "hǐo láaeo",
-  "en": "I'm hungry now.",
-  "where": "Tell a colleague or friend around lunchtime."
+  "rom": "gin khâao rǔue yang",
+  "en": "Have you eaten yet?",
+  "where": "The classic Thai greeting. Ask a colleague or the security guard."
  },
  {
-  "day": 29,
+  "day": 31,
   "thai": "ตรงไปแล้วเลี้ยวซ้าย",
   "words": [
    "ตรงไป",
@@ -316,10 +326,10 @@ export const SAY_IT = [
   ],
   "rom": "dtrong-bpai láaeo líaao sáai",
   "en": "Go straight, then turn left.",
-  "where": "Give directions to a taxi or motorbike taxi on your way home."
+  "where": "Give directions to a taxi on your way home."
  },
  {
-  "day": 30,
+  "day": 32,
   "thai": "จอดตรงนี้",
   "words": [
    "จอดตรงนี้"
@@ -329,18 +339,17 @@ export const SAY_IT = [
   "where": "Getting out of a taxi or motorbike taxi."
  },
  {
-  "day": 31,
-  "thai": "ตลาดไปไหม",
+  "day": 33,
+  "thai": "ขับช้าๆ หน่อย",
   "words": [
-   "ตลาด",
-   "ไปไหม"
+   "ขับช้าๆ หน่อย"
   ],
-  "rom": "dtà-làat bpai mǎi",
-  "en": "To the market, will you go?",
-  "where": "Ask a motorbike taxi (say the place first)."
+  "rom": "khàp cháa-cháa nàawi",
+  "en": "Please drive slower.",
+  "where": "On a motorbike taxi. Your safety comes first."
  },
  {
-  "day": 32,
+  "day": 34,
   "thai": "ไปก่อนนะ",
   "words": [
    "ไป",
@@ -352,7 +361,7 @@ export const SAY_IT = [
   "where": "When you leave work, a shop or friends; Thais say this rather than \"goodbye\"."
  },
  {
-  "day": 33,
+  "day": 35,
   "thai": "ชาเย็นหวานน้อย",
   "words": [
    "ชาเย็น",
@@ -363,7 +372,7 @@ export const SAY_IT = [
   "where": "Order at a drinks stall."
  },
  {
-  "day": 34,
+  "day": 36,
   "thai": "ขอช้อนด้วย",
   "words": [
    "ขอ",
@@ -375,18 +384,17 @@ export const SAY_IT = [
   "where": "When your food comes without one."
  },
  {
-  "day": 35,
-  "thai": "ศูนย์แปด",
+  "day": 37,
+  "thai": "ไม่ใส่น้ำแข็ง",
   "words": [
-   "ศูนย์",
-   "แปด"
+   "ไม่ใส่น้ำแข็ง"
   ],
-  "rom": "sǔun bpàaet",
-  "en": "Zero-eight…",
-  "where": "Read out the start of your phone number in Thai next time someone asks."
+  "rom": "mâi sài náam-khǎeng",
+  "en": "No ice.",
+  "where": "Ordering a drink when you want it cold but not watered down."
  },
  {
-  "day": 36,
+  "day": 38,
   "thai": "ขออีกอัน",
   "words": [
    "ขอ",
@@ -398,7 +406,7 @@ export const SAY_IT = [
   "where": "Order another of the same."
  },
  {
-  "day": 37,
+  "day": 39,
   "thai": "ขอเบียร์สองขวด",
   "words": [
    "ขอ",
@@ -411,7 +419,7 @@ export const SAY_IT = [
   "where": "At a bar or restaurant."
  },
  {
-  "day": 38,
+  "day": 40,
   "thai": "กินเลย",
   "words": [
    "กิน",
@@ -422,7 +430,7 @@ export const SAY_IT = [
   "where": "When the food arrives and others are waiting for you."
  },
  {
-  "day": 39,
+  "day": 41,
   "thai": "ผัดกะเพราไม่เผ็ด",
   "words": [
    "ผัดกะเพรา",
@@ -433,7 +441,7 @@ export const SAY_IT = [
   "where": "Order the classic Thai lunch."
  },
  {
-  "day": 40,
+  "day": 42,
   "thai": "ส้มตำเผ็ดนิดหน่อย",
   "words": [
    "ส้มตำ",
@@ -441,10 +449,10 @@ export const SAY_IT = [
   ],
   "rom": "sôm-dtam phèt nít-nàawi",
   "en": "Papaya salad, a little spicy.",
-  "where": "At a som tam stall."
+  "where": "At a som tam stall. Heads up: som tam often has fish sauce or crab, so say แพ้อาหารทะเล first if you're allergic."
  },
  {
-  "day": 41,
+  "day": 43,
   "thai": "ข้าวเหนียวด้วย",
   "words": [
    "ข้าวเหนียว",
@@ -455,7 +463,7 @@ export const SAY_IT = [
   "where": "Ordering grilled chicken or som tam."
  },
  {
-  "day": 42,
+  "day": 44,
   "thai": "เยอะมาก",
   "words": [
    "เยอะ",
@@ -466,7 +474,7 @@ export const SAY_IT = [
   "where": "When a big portion arrives."
  },
  {
-  "day": 43,
+  "day": 45,
   "thai": "ไม่ยาก",
   "words": [
    "ไม่",
@@ -477,7 +485,7 @@ export const SAY_IT = [
   "where": "When someone says Thai is too difficult. Tell them!"
  },
  {
-  "day": 44,
+  "day": 46,
   "thai": "ไปทางนี้",
   "words": [
    "ไป",
@@ -489,7 +497,7 @@ export const SAY_IT = [
   "where": "Guide the taxi driver when you're close to home."
  },
  {
-  "day": 45,
+  "day": 47,
   "thai": "ลงตรงนี้",
   "words": [
    "ลง",
@@ -501,19 +509,20 @@ export const SAY_IT = [
   "where": "Getting off a bus, songthaew or motorbike taxi."
  },
  {
-  "day": 46,
-  "thai": "วันเสาร์ไปไหน",
+  "day": 48,
+  "thai": "วันเสาร์นี้ไปไหน",
   "words": [
    "วันเสาร์",
+   "นี้",
    "ไป",
    "ไหน"
   ],
-  "rom": "wan-sǎo bpai nǎi",
-  "en": "Where are you going on Saturday?",
+  "rom": "wan-sǎo níi bpai nǎi",
+  "en": "Where are you going this Saturday?",
   "where": "Small talk with a colleague on Friday."
  },
  {
-  "day": 47,
+  "day": 49,
   "thai": "พี่เก็บตังค์ด้วย",
   "words": [
    "พี่",
@@ -524,7 +533,7 @@ export const SAY_IT = [
   "where": "Call the server พี่. It's friendly and polite."
  },
  {
-  "day": 48,
+  "day": 50,
   "thai": "นานไหม",
   "words": [
    "นาน",
@@ -535,7 +544,7 @@ export const SAY_IT = [
   "where": "When ordering food or waiting for a repair."
  },
  {
-  "day": 49,
+  "day": 51,
   "thai": "ก็ได้",
   "words": [
    "ก็ได้"
@@ -545,7 +554,7 @@ export const SAY_IT = [
   "where": "When someone suggests something and you're happy with it."
  },
  {
-  "day": 50,
+  "day": 52,
   "thai": "นั่งตรงนี้ได้ไหม",
   "words": [
    "นั่ง",
@@ -559,30 +568,30 @@ export const SAY_IT = [
   "where": "At a busy food court or café."
  },
  {
-  "day": 51,
-  "thai": "วินมอเตอร์ไซค์อยู่ที่ไหน",
+  "day": 53,
+  "thai": "วินมอเตอร์ไซค์อยู่ไหน",
   "words": [
    "วินมอเตอร์ไซค์",
    "อยู่",
-   "ที่ไหน"
+   "ไหน"
   ],
-  "rom": "win-maaw-dtoe-sai yùu thîi-nǎi",
+  "rom": "win-maaw-dtoe-sai yùu nǎi",
   "en": "Where is the motorbike taxi stand?",
   "where": "When you're somewhere new."
  },
  {
-  "day": 52,
-  "thai": "แพงไปลดได้ไหม",
+  "day": 54,
+  "thai": "ทำงานที่ไหน",
   "words": [
-   "แพงไป",
-   "ลดได้ไหม"
+   "ทำงาน",
+   "ที่ไหน"
   ],
-  "rom": "phaaeng bpai lót dâai mǎi",
-  "en": "Too expensive. Can you give a discount?",
-  "where": "Bargaining with a tuk-tuk driver or at the market."
+  "rom": "tham-ngaan thîi-nǎi",
+  "en": "Where do you work?",
+  "where": "Small talk with someone you see every day."
  },
  {
-  "day": 53,
+  "day": 55,
   "thai": "เปิดไหม",
   "words": [
    "เปิด",
@@ -593,7 +602,7 @@ export const SAY_IT = [
   "where": "Before sitting down at a shop or stall."
  },
  {
-  "day": 54,
+  "day": 56,
   "thai": "ขอถามหน่อย",
   "words": [
    "ขอ",
@@ -605,7 +614,7 @@ export const SAY_IT = [
   "where": "Before asking a stranger for directions."
  },
  {
-  "day": 55,
+  "day": 57,
   "thai": "ชอบสีนี้",
   "words": [
    "ชอบ",
@@ -617,7 +626,18 @@ export const SAY_IT = [
   "where": "Shopping for clothes at the market."
  },
  {
-  "day": 56,
+  "day": 58,
+  "thai": "เอาหมู",
+  "words": [
+   "เอา",
+   "หมู"
+  ],
+  "rom": "ao mǔu",
+  "en": "Pork, please.",
+  "where": "When the vendor asks หมูหรือไก่ (pork or chicken?)."
+ },
+ {
+  "day": 59,
   "thai": "สนุกไหม",
   "words": [
    "สนุก",
@@ -628,59 +648,21 @@ export const SAY_IT = [
   "where": "Ask a Thai friend about their weekend or trip."
  },
  {
-  "day": 57,
-  "thai": "ข้าวผัดกุ้งไม่เผ็ด",
+  "day": 60,
+  "thai": "ข้าวผัดหมู",
   "words": [
    "ข้าวผัด",
-   "กุ้ง",
-   "ไม่เผ็ด"
+   "หมู"
   ],
-  "rom": "khâao-phàt gûng mâi phèt",
-  "en": "Shrimp fried rice, not spicy.",
+  "rom": "khâao-phàt mǔu",
+  "en": "Pork fried rice.",
   "where": "Order at a street-food stall."
- },
- {
-  "day": 58,
-  "thai": "อาหารเช้ากินอะไร",
-  "words": [
-   "อาหารเช้า",
-   "กิน",
-   "อะไร"
-  ],
-  "rom": "aa-hǎan-cháo gin à-rai",
-  "en": "What did you have for breakfast?",
-  "where": "Small talk: Thais often ask what you've eaten."
- },
- {
-  "day": 59,
-  "thai": "อันนี้ยาวไป",
-  "words": [
-   "อัน",
-   "นี้",
-   "ยาว",
-   "ไป"
-  ],
-  "rom": "an níi yaao bpai",
-  "en": "This one's too long.",
-  "where": "Trying on trousers at the market."
- },
- {
-  "day": 60,
-  "thai": "กินข้าวหรือยัง",
-  "words": [
-   "กิน",
-   "ข้าว",
-   "หรือ",
-   "ยัง"
-  ],
-  "rom": "gin khâao rǔue yang",
-  "en": "Have you eaten yet?",
-  "where": "The classic Thai greeting. Ask a colleague or the security guard."
  }
 ];
 
-// The line for a learner who has studied `count` course items.
+// The line for a learner who had studied `count` course items before today.
+// After the last line it starts again from the top.
 export function sayItFor(count) {
-  const day = Math.max(1, Math.min(SAY_IT.length, Math.floor(count / 5) || 1));
-  return SAY_IT[day - 1];
+  const n = Math.max(1, Math.floor(count / 5) + 1);
+  return SAY_IT[(n - 1) % SAY_IT.length];
 }

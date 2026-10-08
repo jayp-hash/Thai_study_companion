@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Deck from '../vocabulary/Deck';
 import { useProgressStore, coverage, endOfToday, dayKey, GOAL_OPTIONS } from '../lib/progress';
 import { useUser } from '../lib/useUser';
-import { sayItFor } from '../lib/sayit';
+import { SAY_IT, sayItFor } from '../lib/sayit';
+import { supabaseBrowser } from '../lib/supabase-browser';
 import { readStore, writeStore, dayKey as todayKey } from '../lib/progress';
 
 const MAX_REVIEWS = 30;    // review cap per day; any backlog rolls over, so a session stays ~5-7 minutes
@@ -60,18 +61,53 @@ function Meter({ value, from }) {
 }
 
 // "Say it Today": one real-life line to use today, with an "I said it" tap.
-const SAID_KEY = 'tsc-said'; // { "2026-10-09": 12 (day number of the line), ... }
-function SayIt({ count }) {
-  const line = sayItFor(count);
+// The line is fixed for the whole calendar day and only uses words studied
+// before today. Taps are kept in this browser and, when signed in, in the
+// account (said_it table).
+const SAID_KEY = 'tsc-said';          // { "2026-10-09": 12 (line number), ... }
+const TODAY_LINE_KEY = 'tsc-sayit-day'; // { day: "2026-10-09", line: 12 }
+function SayIt({ studiedBeforeToday }) {
+  const { user } = useUser();
   const [said, setSaid] = useState({});
+  const [lineNo, setLineNo] = useState(null);
   const [playing, setPlaying] = useState(false);
-  useEffect(() => { setSaid(readStore(SAID_KEY, {})); }, []);
+  const today = todayKey();
+
+  useEffect(() => {
+    setSaid(readStore(SAID_KEY, {}));
+    const saved = readStore(TODAY_LINE_KEY, null);
+    if (saved?.day === today) setLineNo(saved.line);
+    else {
+      const line = sayItFor(studiedBeforeToday).day;
+      writeStore(TODAY_LINE_KEY, { day: today, line });
+      setLineNo(line);
+    }
+  }, [today, studiedBeforeToday]);
+
+  // Signed in: merge taps from the account
+  useEffect(() => {
+    if (!user) return;
+    supabaseBrowser().from('said_it').select('day, line').then(({ data, error }) => {
+      if (error || !data) return;
+      setSaid((cur) => {
+        const merged = { ...Object.fromEntries(data.map((r) => [r.day, r.line])), ...cur };
+        writeStore(SAID_KEY, merged);
+        const missing = Object.entries(cur).filter(([d]) => !data.some((r) => r.day === d));
+        if (missing.length) supabaseBrowser().from('said_it').upsert(missing.map(([day, line]) => ({ user_id: user.id, day, line }))).then(() => {});
+        return merged;
+      });
+    });
+  }, [user]);
+
+  const line = lineNo ? SAY_IT[lineNo - 1] : null;
   if (!line) return null;
-  const doneToday = said[todayKey()] != null;
+  const doneToday = said[today] != null;
   const total = Object.keys(said).length;
   const markSaid = () => {
-    const next = { ...said, [todayKey()]: line.day };
+    const next = { ...said, [today]: line.day };
     writeStore(SAID_KEY, next); setSaid(next);
+    if (user) supabaseBrowser().from('said_it').upsert({ user_id: user.id, day: today, line: line.day })
+      .then(({ error }) => { if (error) console.warn('Could not save said_it', error); });
   };
   const play = () => {
     try {
@@ -84,7 +120,7 @@ function SayIt({ count }) {
   };
   return (
     <section className="sayit" aria-label="Say it today">
-      <p className="sayit-eyebrow">Say it today</p>
+      <p className="sayit-eyebrow"><span lang="th">พูดวันนี้</span> · Say it today</p>
       <div className="sayit-line">
         <button type="button" className={`sayit-play${playing ? ' on' : ''}`} onClick={play} aria-label={`Play ${line.thai}`}>
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
@@ -97,9 +133,9 @@ function SayIt({ count }) {
       </div>
       <p className="sayit-where">{line.where}</p>
       {doneToday ? (
-        <p className="sayit-done">Nice! You've used Thai in real life {total === 1 ? 'once' : `${total} times`}.</p>
+        <p className="sayit-done">Nice! You've used Thai out loud on {total} {total === 1 ? 'day' : 'days'}.</p>
       ) : (
-        <button type="button" className="sayit-btn" onClick={markSaid}>I said it!</button>
+        <button type="button" className="sayit-btn" onClick={markSaid}><span lang="th">พูดแล้ว!</span> · I said it</button>
       )}
     </section>
   );
@@ -109,6 +145,11 @@ export default function Today({ words }) {
   const store = useProgressStore();
   const { progress, goal, setGoal, streak, newToday, loaded, finishToday, days } = store;
   const { user, ready } = useUser();
+  // Items first studied before today (picks today's Say it line)
+  const studiedBeforeToday = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    return Object.values(progress).filter((v) => v.intro < start.getTime()).length;
+  }, [progress]);
   const [mode, setMode] = useState('home'); // home | session | done
   const [queue, setQueue] = useState([]);
   const [before, setBefore] = useState(0);
@@ -174,7 +215,7 @@ export default function Today({ words }) {
         <div className="today-card today-done">
           <p className="today-eyebrow">Session complete</p>
           <h1 className="today-title">Nice work!</h1>
-          <SayIt count={Object.keys(progress).length} />
+          <SayIt studiedBeforeToday={studiedBeforeToday} />
           <div className="today-stats">
             <div><b>{reviewedInSession.current}</b><span>cards studied</span></div>
             <div><b>{streak}</b><span>day{streak === 1 ? '' : 's'} in a row</span></div>
@@ -195,7 +236,7 @@ export default function Today({ words }) {
             <span className="today-streak" title="Days in a row you finished your review"><i style={{ background: todayColour() }} />{streak} day{streak === 1 ? '' : 's'} in a row</span>
           </div>
 
-          <SayIt count={Object.keys(progress).length} />
+          <SayIt studiedBeforeToday={studiedBeforeToday} />
           <Meter value={known} />
           <Week days={days} />
 
