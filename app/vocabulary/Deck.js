@@ -179,8 +179,7 @@ function useHelpSettings() {
 const TIPS_KEY = 'tsc-tips-seen';
 const TIPS = {
   'ไม่เป็นไร': 'See the little marks in mâi-bpen-rai? They show whether your voice goes up or down. Don\'t worry about them yet: just copy the audio.',
-  'ครับ': 'Men end polite sentences with ครับ. Women use ค่ะ.',
-  'ค่ะ': 'Women end polite sentences with ค่ะ (คะ in questions). Men use ครับ.',
+  'ครับ': 'Men end polite sentences with ครับ, women with ค่ะ (คะ in questions). Example lines leave them off: add your own.',
   'ผม': 'ผม is "I" for men. Women usually say ฉัน.',
   'ฉัน': 'ฉัน is "I". Women use it most, men usually say ผม. The example sentences use ฉัน.',
 };
@@ -263,7 +262,9 @@ export default function Deck({ words, session = false, onRated, onDone }) {
   const tourOpenRef = useRef(false);
   tourOpenRef.current = tourOpen;
   useEffect(() => {
-    if (!flipped || tourOpen || !readStore(TOUR_KEY, false) || readStore(HINT_BACK_KEY, false)) return;
+    const tourDone = readStore(TOUR_KEY, false);
+    const firstDay = tourDone === new Date().toDateString(); // finished the first tour today
+    if (!flipped || tourOpen || !tourDone || firstDay || readStore(HINT_BACK_KEY, false)) return;
     selfFlips.current += 1;
     if (selfFlips.current < 3) return; // wait until the 3rd flip, so the first minutes aren't all tips
     const t = setTimeout(() => setTourOpen('back'), 650); // after the flip animation
@@ -720,7 +721,7 @@ export default function Deck({ words, session = false, onRated, onDone }) {
           setSide={(side) => { stop(); setFlipped(side === 'back'); }}
           onClose={() => {
             const kind = tourOpen;
-            writeStore(TOUR_KEY, true);
+            if (!readStore(TOUR_KEY, false)) writeStore(TOUR_KEY, new Date().toDateString()); // remember the day
             if (kind !== 'intro') writeStore(HINT_BACK_KEY, true); // the full tour covers the back too
             setTourOpen(false);
             if (kind !== 'back') setFlipped(false);

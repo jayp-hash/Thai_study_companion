@@ -103,7 +103,7 @@ export const SAY_IT = [
    "ไปตลาดไหม"
   ],
   "rom": "bpai dtà-làat mǎi",
-  "en": "To the market, will you go?",
+  "en": "Will you go to the market?",
   "where": "Ask a motorbike taxi. Swap in your own place."
  },
  {
@@ -284,14 +284,16 @@ export const SAY_IT = [
  },
  {
   "day": 28,
-  "thai": "ชื่ออะไร",
+  "thai": "กินข้าวหรือยัง",
   "words": [
-   "ชื่อ",
-   "อะไร"
+   "กิน",
+   "ข้าว",
+   "หรือ",
+   "ยัง"
   ],
-  "rom": "chûue à-rai",
-  "en": "What's your name?",
-  "where": "Ask the vendor you buy from every day."
+  "rom": "gin khâao rǔue yang",
+  "en": "Have you eaten yet?",
+  "where": "The classic Thai greeting. Ask a colleague or the security guard."
  },
  {
   "day": 29,
@@ -305,16 +307,14 @@ export const SAY_IT = [
  },
  {
   "day": 30,
-  "thai": "กินข้าวหรือยัง",
+  "thai": "ชื่ออะไร",
   "words": [
-   "กิน",
-   "ข้าว",
-   "หรือ",
-   "ยัง"
+   "ชื่อ",
+   "อะไร"
   ],
-  "rom": "gin khâao rǔue yang",
-  "en": "Have you eaten yet?",
-  "where": "The classic Thai greeting. Ask a colleague or the security guard."
+  "rom": "chûue à-rai",
+  "en": "What's your name?",
+  "where": "Ask the vendor you buy from every day."
  },
  {
   "day": 31,
@@ -449,7 +449,7 @@ export const SAY_IT = [
   ],
   "rom": "sôm-dtam phèt nít-nàawi",
   "en": "Papaya salad, a little spicy.",
-  "where": "At a som tam stall. Heads up: som tam often has fish sauce or crab, so say แพ้อาหารทะเล first if you're allergic."
+  "where": "At a som tam stall. Heads up: som tam usually has fish sauce and often crab or dried shrimp. With a seafood allergy, say แพ้อาหารทะเล first."
  },
  {
   "day": 43,
@@ -482,7 +482,7 @@ export const SAY_IT = [
   ],
   "rom": "mâi yâak",
   "en": "It's not hard.",
-  "where": "When someone says Thai is too difficult. Tell them!"
+  "where": "When someone asks you ภาษาไทยยากไหม (is Thai hard?), answer this."
  },
  {
   "day": 46,
@@ -523,13 +523,15 @@ export const SAY_IT = [
  },
  {
   "day": 49,
-  "thai": "พี่เก็บตังค์ด้วย",
+  "thai": "พี่ขอน้ำแข็งหน่อย",
   "words": [
    "พี่",
-   "เก็บตังค์ด้วย"
+   "ขอ",
+   "น้ำแข็ง",
+   "หน่อย"
   ],
-  "rom": "phîi gèp tang dûaai",
-  "en": "Excuse me, the bill please.",
+  "rom": "phîi khǎaw náam-khǎeng nàawi",
+  "en": "Excuse me, some ice please.",
   "where": "Call the server พี่. It's friendly and polite."
  },
  {
@@ -545,12 +547,13 @@ export const SAY_IT = [
  },
  {
   "day": 51,
-  "thai": "ก็ได้",
+  "thai": "ได้เลย",
   "words": [
-   "ก็ได้"
+   "ได้",
+   "เลย"
   ],
-  "rom": "gâaw-dâai",
-  "en": "Sure, that works.",
+  "rom": "dâai loeei",
+  "en": "Sure!",
   "where": "When someone suggests something and you're happy with it."
  },
  {
@@ -592,12 +595,13 @@ export const SAY_IT = [
  },
  {
   "day": 55,
-  "thai": "เปิดไหม",
+  "thai": "เปิดอยู่ไหม",
   "words": [
    "เปิด",
+   "อยู่",
    "ไหม"
   ],
-  "rom": "bpòeet mǎi",
+  "rom": "bpòeet yùu mǎi",
   "en": "Are you open?",
   "where": "Before sitting down at a shop or stall."
  },

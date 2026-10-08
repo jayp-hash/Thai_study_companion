@@ -75,25 +75,25 @@ function SayIt({ studiedBeforeToday }) {
 
   useEffect(() => {
     setSaid(readStore(SAID_KEY, {}));
+    // Fixed for the day. If progress arrives later (e.g. synced from the
+    // account), it can only move the line forward, never back.
     const saved = readStore(TODAY_LINE_KEY, null);
-    if (saved?.day === today) setLineNo(saved.line);
-    else {
-      const line = sayItFor(studiedBeforeToday).day;
-      writeStore(TODAY_LINE_KEY, { day: today, line });
-      setLineNo(line);
-    }
+    const computed = sayItFor(studiedBeforeToday).day;
+    const line = saved?.day === today ? Math.max(saved.line, computed) : computed;
+    writeStore(TODAY_LINE_KEY, { day: today, line });
+    setLineNo(line);
   }, [today, studiedBeforeToday]);
 
   // Signed in: merge taps from the account
   useEffect(() => {
     if (!user) return;
-    supabaseBrowser().from('said_it').select('day, line').then(({ data, error }) => {
+    supabaseBrowser().from('said_it').select('day, line').eq('kind', 'sayit').then(({ data, error }) => {
       if (error || !data) return;
       setSaid((cur) => {
         const merged = { ...Object.fromEntries(data.map((r) => [r.day, r.line])), ...cur };
         writeStore(SAID_KEY, merged);
         const missing = Object.entries(cur).filter(([d]) => !data.some((r) => r.day === d));
-        if (missing.length) supabaseBrowser().from('said_it').upsert(missing.map(([day, line]) => ({ user_id: user.id, day, line }))).then(() => {});
+        if (missing.length) supabaseBrowser().from('said_it').upsert(missing.map(([day, line]) => ({ user_id: user.id, day, kind: 'sayit', line }))).then(() => {});
         return merged;
       });
     });
@@ -106,7 +106,7 @@ function SayIt({ studiedBeforeToday }) {
   const markSaid = () => {
     const next = { ...said, [today]: line.day };
     writeStore(SAID_KEY, next); setSaid(next);
-    if (user) supabaseBrowser().from('said_it').upsert({ user_id: user.id, day: today, line: line.day })
+    if (user) supabaseBrowser().from('said_it').upsert({ user_id: user.id, day: today, kind: 'sayit', line: line.day })
       .then(({ error }) => { if (error) console.warn('Could not save said_it', error); });
   };
   const play = () => {
@@ -133,7 +133,7 @@ function SayIt({ studiedBeforeToday }) {
       </div>
       <p className="sayit-where">{line.where}</p>
       {doneToday ? (
-        <p className="sayit-done">Nice! You've used Thai out loud on {total} {total === 1 ? 'day' : 'days'}.</p>
+        <p className="sayit-done"><span lang="th">เก่งมาก!</span> {total === 1 ? 'Day 1 of Thai out loud.' : `Thai out loud: ${total} days.`}</p>
       ) : (
         <button type="button" className="sayit-btn" onClick={markSaid}><span lang="th">พูดแล้ว!</span> · I said it</button>
       )}

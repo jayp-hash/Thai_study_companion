@@ -4,14 +4,17 @@
 -- Safe to run more than once.
 -- =====================================================================
 
--- One row per person per day they tapped "I said it!" on a real-life line.
+-- One row per person, per day, per kind, when they tapped "I said it!" on a real-life line.
 -- (Also the best early signal of whether the app changes real life.)
+-- kind: 'sayit' (the day's line) or 'mission' (a real-life mission), so both
+-- can be recorded on the same day.
 create table if not exists said_it (
   user_id uuid not null references auth.users (id) on delete cascade,
   day date not null,
-  line integer not null,          -- which Say it Today line (1–60)
+  kind text not null default 'sayit',
+  line integer not null,          -- which Say it Today line (1–60) or mission number
   created_at timestamptz not null default now(),
-  primary key (user_id, day)
+  primary key (user_id, day, kind)
 );
 
 alter table said_it enable row level security;
