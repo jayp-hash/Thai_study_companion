@@ -119,7 +119,7 @@ async function main() {
   // grey "Vocabulary" band. Typos are listed here so they're easy to fix.
   const CATEGORY_NAMES = ['People & animals', 'Food & drink', 'Time & dates', 'Places & position', 'Actions',
     'Describing words', 'Numbers & counting', 'Question words', 'Grammar words', 'Things & objects',
-    'Body & health', 'Work & society'];
+    'Body & health', 'Work & society', 'Useful phrases'];
   const badCategory = vocab.filter((w) => !CATEGORY_NAMES.includes(w.category));
   if (badCategory.length) {
     console.log(`  Words with a missing or unknown category (${badCategory.length}): ` +

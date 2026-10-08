@@ -1,4 +1,4 @@
-// The 12 word categories and their colours.
+// The 13 word categories (12 + Useful phrases) and their colours.
 //
 // The NAMES must match the "Category" dropdown in the curriculum workbook
 // (Vocabulary tab, list kept on the "Lists" tab). To rename a category,
@@ -19,6 +19,8 @@ export const CATEGORIES = {
   'Things & objects':   { color: '#B0743F', edge: '#82532A' },
   'Body & health':      { color: '#E04848', edge: '#AA2E2E' },
   'Work & society':     { color: '#5F6B80', edge: '#434C5C' },
+  // Whole phrases taught as one card (survival phrase pack)
+  'Useful phrases':     { color: '#1B2A4A', edge: '#0E1730' },
 };
 
 // Words with no category (or a misspelled one) get a neutral band.
