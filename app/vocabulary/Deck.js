@@ -252,6 +252,14 @@ function hexToRgba(hex, alpha) {
 export default function Deck({ words: allWords, session = false, onRated, onDone }) {
   // Topic filter (browse mode): learn only one category, e.g. Food & drink
   const [topic, setTopic] = useState(null);
+  const [topicOpen, setTopicOpen] = useState(false);
+  const topicRef = useRef(null);
+  useEffect(() => {
+    if (!topicOpen) return;
+    const close = (e) => { if (topicRef.current && !topicRef.current.contains(e.target)) setTopicOpen(false); };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [topicOpen]);
   const words = useMemo(
     () => (topic ? allWords.filter((w) => w.category?.name === topic) : allWords),
     [allWords, topic]
@@ -406,6 +414,13 @@ export default function Deck({ words: allWords, session = false, onRated, onDone
         const size = parseFloat(getComputedStyle(big).fontSize);
         big.style.fontSize = `${Math.floor(size * room / big.scrollWidth)}px`;
       }
+      // Also shrink until the whole front (word, romanization, play) fits the card height
+      const front = big.parentElement;
+      let size = parseFloat(getComputedStyle(big).fontSize);
+      while (front && front.scrollHeight > front.clientHeight + 1 && size > 40) {
+        size -= 4;
+        big.style.fontSize = `${size}px`;
+      }
     }
     const back = backBodyRef.current;
     if (back) {
@@ -554,16 +569,22 @@ export default function Deck({ words: allWords, session = false, onRated, onDone
   return (
     <div className="fc">
       {!session && (
-        <div className="fc-topics" role="group" aria-label="Choose a topic">
-          <button type="button" className={`fc-topic${!topic ? ' is-on' : ''}`} aria-pressed={!topic} onClick={() => chooseTopic(null)}>
-            All words <span>{allWords.length}</span>
+        <div className="fc-topic-wrap" ref={topicRef}>
+          <button type="button" className="fc-topic-btn" aria-expanded={topicOpen} onClick={() => setTopicOpen((o) => !o)}>
+            {topic ? <><i style={{ background: topics.find((t) => t.name === topic)?.color }} aria-hidden="true" />{topic}</> : 'All topics'}
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
           </button>
-          {topics.map((t) => (
-            <button key={t.name} type="button" className={`fc-topic${topic === t.name ? ' is-on' : ''}`} aria-pressed={topic === t.name}
-              style={{ '--tc': t.color }} onClick={() => chooseTopic(t.name)}>
-              <i aria-hidden="true" />{t.name} <span>{t.n}</span>
-            </button>
-          ))}
+          {topicOpen && (
+            <div className="fc-topic-panel" role="dialog" aria-label="Choose a topic">
+              <button type="button" className={`fc-topic${!topic ? ' is-on' : ''}`} aria-pressed={!topic} onClick={() => { chooseTopic(null); setTopicOpen(false); }}>All topics</button>
+              {topics.map((t) => (
+                <button key={t.name} type="button" className={`fc-topic${topic === t.name ? ' is-on' : ''}`} aria-pressed={topic === t.name}
+                  style={{ '--tc': t.color }} onClick={() => { chooseTopic(t.name); setTopicOpen(false); }}>
+                  <i aria-hidden="true" />{t.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       <div className="fc-toolbar">

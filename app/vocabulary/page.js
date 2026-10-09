@@ -19,7 +19,7 @@ export default async function VocabularyPage() {
       {/* Compact title, so the whole card fits on screen without scrolling */}
       <div className="fc-page-title">
         <h1>Flashcards</h1>
-        <span>{words.length} words, most useful first</span>
+        <span>Most useful first</span>
       </div>
 
       <ProgressProvider>
