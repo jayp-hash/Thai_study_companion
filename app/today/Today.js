@@ -120,7 +120,7 @@ function SayIt({ studiedBeforeToday }) {
   };
   return (
     <section className="sayit" aria-label="Say it today">
-      <p className="sayit-eyebrow"><span lang="th">พูดวันนี้</span> · Say it today</p>
+      <p className="sayit-eyebrow">Say it today</p>
       <div className="sayit-line">
         <button type="button" className={`sayit-play${playing ? ' on' : ''}`} onClick={play} aria-label={`Play ${line.thai}`}>
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
@@ -133,9 +133,9 @@ function SayIt({ studiedBeforeToday }) {
       </div>
       <p className="sayit-where">{line.where}</p>
       {doneToday ? (
-        <p className="sayit-done"><span lang="th">เก่งมาก!</span> {total === 1 ? 'Day 1 of Thai out loud.' : `Thai out loud: ${total} days.`}</p>
+        <p className="sayit-done">Nice! {total === 1 ? 'Day 1 of Thai out loud.' : `Thai out loud: ${total} days.`}</p>
       ) : (
-        <button type="button" className="sayit-btn" onClick={markSaid}><span lang="th">พูดแล้ว!</span> · I said it</button>
+        <button type="button" className="sayit-btn" onClick={markSaid}>I said it!</button>
       )}
     </section>
   );

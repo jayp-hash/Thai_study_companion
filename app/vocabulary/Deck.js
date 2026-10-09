@@ -28,7 +28,10 @@ async function loadAudio(text) {
   const res = await fetch(`/api/speak?text=${encodeURIComponent(text)}&voice=${currentVoice}&v=${AUDIO_VERSION}`);
   if (!res.ok) throw new Error('speak request failed');
   const audio = new Audio(URL.createObjectURL(await res.blob()));
+  // Keep the voice's pitch when slowed down (Safari and Firefox use prefixed names)
   audio.preservesPitch = true;
+  audio.webkitPreservesPitch = true;
+  audio.mozPreservesPitch = true;
   audioCache.set(key, audio);
   return audio;
 }
@@ -38,11 +41,13 @@ async function loadAudio(text) {
 function usePlayer() {
   const current = useRef(null);
   const frame = useRef(0);
+  const request = useRef(0); // each play() gets a number; only the latest one may start
   const [playing, setPlaying] = useState(null);
   const [loading, setLoading] = useState(null);
   const [progress, setProgress] = useState(0); // 0..1 through the clip, for the karaoke
 
   const stop = useCallback(() => {
+    request.current += 1; // anything still loading is now out of date
     const a = current.current;
     if (a) { a.pause(); a.onended = null; }
     cancelAnimationFrame(frame.current);
@@ -55,9 +60,16 @@ function usePlayer() {
   const play = useCallback(async (id, text, rate = 1) => {
     if (current.current && playing === id) { stop(); return; } // pressing again = stop
     stop();
+    const mine = request.current;
     setLoading(id);
     try {
       const audio = await loadAudio(text);
+      // Another button was pressed while this clip was loading: drop this one,
+      // so quick taps never play two clips on top of each other.
+      if (mine !== request.current) return;
+      audio.pause();
+      // Safari resets playbackRate when a clip starts, so set the default too
+      audio.defaultPlaybackRate = rate;
       audio.playbackRate = rate;
       audio.currentTime = 0;
       audio.onended = () => stop();
@@ -65,6 +77,8 @@ function usePlayer() {
       setLoading(null);
       setPlaying(id);
       await audio.play();
+      if (mine !== request.current) { audio.pause(); return; }
+      audio.playbackRate = rate; // re-apply after start (Safari)
       // Track how far through the clip we are, every animation frame,
       // so the karaoke highlight moves smoothly.
       const tick = () => {
@@ -74,7 +88,7 @@ function usePlayer() {
       };
       tick();
     } catch {
-      stop();
+      if (mine === request.current) stop();
     }
   }, [playing, stop]);
 
