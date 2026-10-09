@@ -873,3 +873,27 @@ body:has(.fc) .site-header { margin-bottom: 12px; padding-block: 14px; }
 .fc-topic i { width: 10px; height: 10px; border-radius: 50%; background: var(--tc, var(--fc-primary)); flex: none; }
 .fc-topic.is-on { border-color: var(--tc, var(--fc-primary)); background: color-mix(in srgb, var(--tc, var(--fc-primary)) 10%, var(--fc-surface)); }
 .fc-topic:focus-visible, .fc-topic-btn:focus-visible { outline: 3px solid var(--fc-primary); outline-offset: 2px; }
+
+/* Front of card: the word gets whatever height is left after romanization + play,
+   and its size follows the card's height (cqh), so play is never cut off. */
+.fc-front-body { container-type: size; grid-template-rows: minmax(0, 1fr) auto auto; align-content: stretch; place-items: center; padding: 10px 20px 26px; gap: 4px; }
+.fc-front-body .fc-big-thai { font-size: clamp(40px, min(22vw, 30cqh), 104px); line-height: 1.6; align-self: center; }
+
+/* ---------- Soi Talk brand layer ---------- */
+:root { --soi: #1D4FA0; --soi-ink: #0E2E63; --soi-tint: #E8EFFA; --district: #1E8A4C; }
+.site-header .brand { display: inline-flex; line-height: 0; }
+.site-header .brand .soi-sign { display: block; height: auto; }
+@media (max-width: 560px) { .site-header .brand .soi-sign { width: 104px; } }
+.lp-brand { margin: 0 0 28px; }
+.lp-brand .soi-sign { display: block; max-width: 100%; height: auto; filter: drop-shadow(0 6px 14px rgba(14,46,99,.18)); }
+.lp-tag { font: 700 clamp(26px, 3.4vw, 34px)/1.1 var(--font-sign), var(--font-body), sans-serif; color: var(--soi-ink); margin: 16px 0 6px; }
+.lp-tag::after { content: ''; display: block; width: 56px; height: 5px; border-radius: 3px; background: var(--day, #F2C200); margin-top: 10px; }
+.lp-meter-note { font-size: 15px; line-height: 1.5; color: #6b7385; margin: 8px 0 0; max-width: 30em; }
+.lp h1, .lp h2 { font-family: var(--font-sign), var(--font-display), sans-serif; font-weight: 700; }
+.lp-th { color: var(--soi); }
+.lp-who button[aria-pressed="true"] { background: var(--soi-tint); border-color: var(--soi); }
+.lp-eyebrow { color: var(--soi); }
+.lp-curve-bar i { background: var(--soi); }
+.lp-btn { font-family: var(--font-sign), var(--font-body), sans-serif; font-weight: 700; background: var(--soi); border-radius: 8px; box-shadow: inset 0 0 0 2px var(--soi), inset 0 0 0 4px #fff; padding: 18px 28px; transition: background .15s; }
+.lp-btn:hover { background: var(--soi-ink); box-shadow: inset 0 0 0 2px var(--soi-ink), inset 0 0 0 4px #fff; }
+.lp-btn:active { transform: none; box-shadow: inset 0 0 0 2px var(--soi-ink), inset 0 0 0 4px #fff; }

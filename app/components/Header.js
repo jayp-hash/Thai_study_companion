@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useUser } from '../lib/useUser';
 import { supabaseBrowser } from '../lib/supabase-browser';
+import SoiSign from './SoiSign';
 
 const LINKS = [
   { href: '/', label: 'Home' },
@@ -47,8 +48,8 @@ export default function Header() {
 
   return (
     <header className="site-header">
-      <a href="/" className="brand">
-        <span className="th">ภ</span>Thai Study Companion
+      <a href="/" className="brand" aria-label="Soi Talk home">
+        <SoiSign width={128} title="Soi Talk" />
       </a>
       <nav>
         {LINKS.map((link) => (

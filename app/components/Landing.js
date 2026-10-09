@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useUser } from '../lib/useUser';
+import SoiSign from './SoiSign';
 
 // The home page for new visitors. The pitch changes with who's visiting
 // (live in Thailand / Thai partner / visiting); the choice is remembered
@@ -109,6 +110,19 @@ function DemoCard({ card }) {
   );
 }
 
+// Counts the hero sign's number up from 0 once, so the meter idea lands at a glance.
+function useCountUp(target, ms = 1600) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setN(target); return; }
+    let raf; const t0 = performance.now();
+    const step = (t) => { const k = Math.min(1, (t - t0) / ms); setN(Math.round(target * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return n;
+}
+
 const Tick = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg>;
 
 export default function Landing({ wordCount, demo, curve }) {
@@ -125,11 +139,18 @@ export default function Landing({ wordCount, demo, curve }) {
     : <a className="lp-btn" href="/today">Start learning free</a>;
   const curvePts = Object.entries(curve).map(([n, pct]) => ({ n: Number(n), pct }));
   const maxPct = Math.max(...curvePts.map((p) => p.pct), 1);
+  const goal = curvePts.find((p) => p.n >= 500) || curvePts[curvePts.length - 1] || { n: 500, pct: 50 };
+  const meter = useCountUp(goal.pct);
 
   return (
     <main className="lp">
       <section className="lp-hero">
         <div className="lp-pitch">
+          <div className="lp-brand">
+            <SoiSign width={300} number={meter} title={`Soi Talk street sign showing ${meter}`} />
+            <p className="lp-tag">Thai for your street.</p>
+            <p className="lp-meter-note">The number on your sign is your street meter: the share of everyday Thai you understand. Learn {goal.n.toLocaleString('en')} words and it reads {goal.pct}.</p>
+          </div>
           <p className="lp-who-label" id="who-label">I'm learning Thai because</p>
           <div className="lp-who" role="group" aria-labelledby="who-label">
             {Object.entries(PERSONAS).map(([id, p]) => (
