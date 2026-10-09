@@ -249,7 +249,20 @@ function hexToRgba(hex, alpha) {
 // session = the daily review: one list of cards, no sets or shuffle.
 //   onRated(word, knewIt) -> return true if the word was put back in the queue
 //   onDone() is called after rating the last card.
-export default function Deck({ words, session = false, onRated, onDone }) {
+export default function Deck({ words: allWords, session = false, onRated, onDone }) {
+  // Topic filter (browse mode): learn only one category, e.g. Food & drink
+  const [topic, setTopic] = useState(null);
+  const words = useMemo(
+    () => (topic ? allWords.filter((w) => w.category?.name === topic) : allWords),
+    [allWords, topic]
+  );
+  const topics = useMemo(() => {
+    const count = new Map();
+    for (const w of allWords) { const n = w.category?.name; if (n) count.set(n, (count.get(n) || 0) + 1); }
+    // Useful phrases first, then the biggest topics
+    return [...count.entries()].sort((a, b) => (a[0] === 'Useful phrases' ? -1 : b[0] === 'Useful phrases' ? 1 : b[1] - a[1]))
+      .map(([name, n]) => ({ name, n, color: allWords.find((w) => w.category?.name === name).category.color }));
+  }, [allWords]);
   const size = session ? Math.max(words.length, 1) : SET_SIZE;
   const setCount = Math.ceil(words.length / size);
   const [setIndex, setSetIndex] = useState(0);
@@ -529,8 +542,30 @@ export default function Deck({ words, session = false, onRated, onDone }) {
     </div>
   );
 
+  function chooseTopic(t) {
+    stop();
+    setTopic(t);
+    setSetIndex(0);
+    setOrder(null);
+    setCardIndex(0);
+    setFlipped(false);
+  }
+
   return (
     <div className="fc">
+      {!session && (
+        <div className="fc-topics" role="group" aria-label="Choose a topic">
+          <button type="button" className={`fc-topic${!topic ? ' is-on' : ''}`} aria-pressed={!topic} onClick={() => chooseTopic(null)}>
+            All words <span>{allWords.length}</span>
+          </button>
+          {topics.map((t) => (
+            <button key={t.name} type="button" className={`fc-topic${topic === t.name ? ' is-on' : ''}`} aria-pressed={topic === t.name}
+              style={{ '--tc': t.color }} onClick={() => chooseTopic(t.name)}>
+              <i aria-hidden="true" />{t.name} <span>{t.n}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="fc-toolbar">
         {!session && <label className="fc-set">
           <span className="sr-only">Set</span>
